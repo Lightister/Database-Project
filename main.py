@@ -1,4 +1,7 @@
-"""Authors: Bryan Erickson and Aidan Adams"""
+"""Authors: Bryan Erickson and Aidan Adams
+
+!!!!!!! Run 'initializeDB.py' before using this program !!!!!!!
+"""
 import mysql.connector
 
 def initialize_database():
@@ -18,39 +21,14 @@ def initialize_database():
     myCursor.execute("CREATE DATABASE IF NOT EXISTS Campground")
     myCursor.execute("USE Campground")
 
-def createTables():
-    #create campsite table
-    myCursor.execute("""
-    CREATE TABLE IF NOT EXISTS Campsite(
-        CampsiteID TINYINT UNSIGNED AUTO_INCREMENT,
-        SiteName CHAR(3) UNIQUE,
-        Price DECIMAL(4,2),
-        PRIMARY KEY (CampsiteID)
-        )
-""")
 
-    #Create CampsiteBooking table
-
-    #Create Concessions table
-    myCursor.execute("""
-    CREATE TABLE IF NOT EXISTS Concessions (
-        ItemID TINYINT UNSIGNED AUTO_INCREMENT,
-        ItemName VARCHAR(20),
-        Price DECIMAL(4,2),
-        StockAvailable INTEGER,
-        PRIMARY KEY (ItemID)
-        )
-""")
-
-    #Create ConcessionRecipt table
     
 
 def main():
-    #Initliaze the the database
+    #Connect to the database
     initialize_database()
     
-    #Initialize the needed tables
-    createTables()
+   
 
     myCursor.execute("SHOW TABLES")
 
