@@ -44,7 +44,7 @@ def createTables():
     HouseholdNum TINYINT UNSIGNED,
     CampsiteID TINYINT UNSIGNED,
     Cost DECIMAL(10,2),
-    NumOfNightsBooked TINYINT UNSIGNED,
+    NumOfNightsBooked TINYINT UNSIGNED CHECK (NumOfNightsBooked <= 14),
     StartDate DATE NOT NULL,
     EndDate Date NOT NULL,
     PRIMARY KEY (HouseHoldNum, CampsiteID, StartDate),
