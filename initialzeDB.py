@@ -122,7 +122,7 @@ def initializeTables():
     ]
     myCursor.executemany(fillCampsites, campsites)
     
-    
+    #Adds data to the concessions table
     fillConcessions = "INSERT INTO Concessions (ItemName, Price, StockAvailable) VALUES (%s, %s, %s)"
     concessions = [
         ('Tent', 85.00 , 3),
