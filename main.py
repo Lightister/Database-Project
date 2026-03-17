@@ -10,12 +10,13 @@ def initialize_database():
     db = mysql.connector.connect(
         host="localhost",
         user="root",
-        password="wordPass12"
+        password="wordPass12",
+        autocommit = True
     ) 
 
     #Creating a global cursor object
     global myCursor
-    myCursor = db.cursor()
+    myCursor = db.cursor(buffered=True)
 
     #Creates the database if it doesn't exist and uses it
     myCursor.execute("CREATE DATABASE IF NOT EXISTS Campground")
