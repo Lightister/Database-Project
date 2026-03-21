@@ -29,8 +29,6 @@ def main():
     #Connect to the database
     initialize_database()
     
-   
-
     myCursor.execute("SHOW TABLES")
 
     for x in myCursor:
