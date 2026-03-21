@@ -23,16 +23,71 @@ def initialize_database():
     myCursor.execute("USE Campground")
 
 
+def showCampsites():
+    myCursor.execute("""
+    SELECT * FROM Campsite
+""")
+    
+    myResult = myCursor.fetchall()
+
+    for x in myResult:
+        print(x)
+
+def showConcessions():
+    myCursor.execute("SELECT * FROM Concessions")
+    myResult = myCursor.fetchall()
+
+    for x in myResult:
+        print(x)
+
+def mainMenu():
+    #Main menu
+    endMenu = False
+
+    while(not endMenu):
+        print("Select an option:")
+        print("1: Show all campsites")
+        print("2: Show all concessions")
+        print("3: Show all watercraft")
+        print("4: Show all picnic shelters")
+        print("3: Add new household")
+        print("4: Campsite reservation options")
+        print("5: Watercraft reservation options")
+        print("6: Picnic shelter reservation options")
+
+        menuOption = int(input("Option: "))
+
+        if menuOption == 1:
+            showCampsites()
+        elif menuOption == 2:
+            showConcessions()
+        elif menuOption == 3:
+            print("option selected")
+        elif menuOption == 4:
+            print("option selected")
+        elif menuOption == 5:
+            print("option selected")
+        elif menuOption == 6:
+            print("option selected")
+        else:
+            endMenu = True 
+
+
+
+
+
     
 
 def main():
     #Connect to the database
     initialize_database()
-    
-    myCursor.execute("SHOW TABLES")
 
-    for x in myCursor:
-        print(x)
+    #Display the main menu
+    mainMenu()
+    
+    
+
+    
 
 
 
