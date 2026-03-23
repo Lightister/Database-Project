@@ -23,7 +23,10 @@ def createTables():
     #Remove all tables
     myCursor.execute("DROP TABLE IF EXISTS CampsiteBooking")
     myCursor.execute("DROP TABLE IF EXISTS ConcessionRecipt")
+    myCursor.execute("DROP TABLE IF EXISTS Reservations")
     myCursor.execute("DROP TABLE IF EXISTS Campsite")
+    myCursor.execute("DROP TABLE IF EXISTS PicnicShelters")
+    myCursor.execute("DROP TABLE IF EXISTS Watercraft")
     myCursor.execute("DROP TABLE IF EXISTS Concessions")
     myCursor.execute("DROP TABLE IF EXISTS Household")
 

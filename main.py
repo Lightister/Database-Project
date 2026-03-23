@@ -25,7 +25,7 @@ def initialize_database():
 
 def showCampsites():
     myCursor.execute("""
-    SELECT * FROM Campsite
+    EXPLAIN SELECT * FROM Campsite
 """)
     
     myResult = myCursor.fetchall()
@@ -34,7 +34,7 @@ def showCampsites():
         print(x)
 
 def showConcessions():
-    myCursor.execute("SELECT * FROM Concessions")
+    myCursor.execute("EXPLAIN SELECT * FROM Concessions")
     myResult = myCursor.fetchall()
 
     for x in myResult:
