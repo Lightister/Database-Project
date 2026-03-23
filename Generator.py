@@ -81,7 +81,7 @@ def insert_shelters():
         (13, 'Maple Shelter',    65.00),
         (14, 'Poplar Shelter',   55.00),
         (15, 'Hickory Shelter',  45.00),
-        (16, 'Redwood Shelter',  65.00),
+        (16, 'Redwood Shelter',  65.00), 
         (17, 'Maple Shelter',    40.00),
         (18, 'Cedar Shelter',    40.00),
         (19, 'Maple Shelter',    55.00),
