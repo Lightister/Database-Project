@@ -25,7 +25,7 @@ def initialize_database():
 
 def showCampsites():
     myCursor.execute("""
-    EXPLAIN SELECT * FROM Campsite
+    SELECT * FROM Campsite
 """)
     
     myResult = myCursor.fetchall()

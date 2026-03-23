@@ -478,11 +478,12 @@ def main():
     
     #Creates the needed tables
     #createTables()
+    makeTables()
 
     #Initializes the tables with starting data
-    #initializeTables()
+    initializeTables()
 
-    makeTables()
+    
     #delete()
 
 
