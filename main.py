@@ -34,7 +34,7 @@ def showCampsites():
         print(x)
 def showHouseholds():
     myCursor.execute("""
-    SELECT HouseholdNum FROM Household
+    SELECT * FROM Household
     """)
 
     myResult = myCursor.fetchall()
@@ -43,7 +43,7 @@ def showHouseholds():
         print(x)
 def showWaterReservations():
     myCursor.execute("""
-    SELECT WaterCraftId, HouseholdNum FROM Reservations, Watercraft
+    SELECT WaterCraftId, HouseholdNum FROM Reservations, Watercraft WHERE HouseholdNum = HouseholdNum
     """)
 
 def showWatercraft():
@@ -52,7 +52,16 @@ def showWatercraft():
 
     for x in myResult:
         print (x)
-    
+
+def showShelters
+    myCursor.execute("""
+    SELECT * FROM PicnicShelters
+    """)
+
+    myResult = myCursor.fetchall()
+
+    for x in myResult:
+        print(x)
 def showConcessions():
     myCursor.execute("SELECT * FROM Concessions")
     myResult = myCursor.fetchall()
