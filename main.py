@@ -45,9 +45,16 @@ def showWaterReservations():
     myCursor.execute("""
     SELECT WaterCraftId, HouseholdNum FROM Reservations, Watercraft
     """)
+
+def showWatercraft():
+    myCursor.execute("SELECT * FROM Watercraft")
+    myResult = myCursor.fetchall()
+
+    for x in myResult:
+        print (x)
     
 def showConcessions():
-    myCursor.execute("EXPLAIN SELECT * FROM Concessions")
+    myCursor.execute("SELECT * FROM Concessions")
     myResult = myCursor.fetchall()
 
     for x in myResult:
@@ -75,7 +82,7 @@ def mainMenu():
         elif menuOption == 2:
             showConcessions()
         elif menuOption == 3:
-            print("option selected")
+            showWatercraft()
         elif menuOption == 4:
             print("option selected")
         elif menuOption == 5:
