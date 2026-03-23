@@ -39,14 +39,14 @@ def createTables():
         LastName VARCHAR(30),
         Email VARCHAR(30),
         Balance Decimal(10, 2),
-        Phone number VARCHAR(12) 
+        PhoneNumber VARCHAR(12) 
     )
 """)
 
     #create Watercraft table
     myCursor.execute("""
     CREATE TABLE IF NOT EXISTS Watercraft(
-        WaterCraftId VARCHAR(8)
+        WaterCraftId VARCHAR(8),
         PRIMARY KEY (WaterCraftId),
         Price Decimal(10, 2),
         WatercraftType VARCHAR(40)
@@ -56,25 +56,25 @@ def createTables():
     #create Picnic Shelter table
     myCursor.execute("""
     CREATE TABLE IF NOT EXISTS PicnicShelters(
-        ShelterID TINYINT,
-        Primary Key  (Shelter ID),
+        ShelterID TINYINT AUTO_INCREMENT,
+        PRIMARY KEY  (ShelterID),
         ShelterName VARCHAR(30),
-        Price DEcimal(10, 2)
+        Price DECIMAL(10, 2)
         )
 """)
 
     #create Reservations table
     myCursor.execute("""
     CREATE TABLE IF NOT EXISTS Reservations(
-        HouseholdNum TINYINT UNSIGNED,
-        FOREIGN KEY (HouseHoldNum) REFERENCES Household(HouseHoldNum) ON DELETE CASCADE,
-        WaterCraftId VARCHAR(8)
-        FOREIGN KEY (WaterCraftId)       REFERENCES Watercraft(WaterCraftId),
+        HouseHoldNum TINYINT UNSIGNED,
+        WaterCraftId VARCHAR(8),
         ShelterID TINYINT,
-        FOREIGN KEY (ShelterID) REFERENCES PicnicShelters(ShelterID),
         StartTime DATETIME,
         EndTime DATETIME,
-        Cost Decimal(10,2)
+        Cost DECIMAL(10,2),
+        FOREIGN KEY (HouseHoldNum) REFERENCES Household(HouseHoldNum) ON DELETE CASCADE,
+        FOREIGN KEY (WaterCraftId) REFERENCES Watercraft(WaterCraftId),
+        FOREIGN KEY (ShelterID) REFERENCES PicnicShelters(ShelterID)
         )
 """)
     
