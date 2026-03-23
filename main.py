@@ -32,7 +32,20 @@ def showCampsites():
 
     for x in myResult:
         print(x)
+def showHouseholds():
+    myCursor.execute("""
+    SELECT HouseholdNum FROM Household
+    """)
 
+    myResult = myCursor.fetchall()
+
+    for x in myResult:
+        print(x)
+def showWaterReservations():
+    myCursor.execute("""
+    SELECT WaterCraftId, HouseholdNum FROM Reservations, Watercraft
+    """)
+    
 def showConcessions():
     myCursor.execute("EXPLAIN SELECT * FROM Concessions")
     myResult = myCursor.fetchall()
