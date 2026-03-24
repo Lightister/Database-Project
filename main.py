@@ -53,7 +53,7 @@ def showWatercraft():
     for x in myResult:
         print (x)
 
-def showShelters
+def showShelters():
     myCursor.execute("""
     SELECT * FROM PicnicShelters
     """)
@@ -93,7 +93,7 @@ def mainMenu():
         elif menuOption == 3:
             showWatercraft()
         elif menuOption == 4:
-            print("option selected")
+            showShelters()
         elif menuOption == 5:
             print("option selected")
         elif menuOption == 6:

@@ -185,11 +185,76 @@ def insert_households():
     myCursor.executemany(sql, households)
     print(f"Inserted {myCursor.rowcount} rows into Household")
 
+def fillConcessions():
+    fillConcessions = "INSERT INTO Concessions (ItemName, Price, StockAvailable) VALUES (%s, %s, %s)"
+    concessions = [
+            ('Tent', 85.00 , 3),
+            ('Stakes', 15.30, 18 ),
+            ('Tarp', 25.00 , 4 ),
+            ('Detergent', 8.98 , 10),
+            ('Battery', 12.64, 19),
+            ('Flashlight', 5.06, 28),
+            ('Sunscreen',7.94 , 13),
+            ('Bug Spray', 6.49 ,11 ),
+            ('Matches',0.25 , 50),
+            ('Lighter',3.56 , 25),
+            ('Firestarter',2.75 , 28),
+            ('Lantern', 5.82, 11),
+            ('Propane', 10.38, 6),
+            ('Chips', 1.25 , 58),
+            ('Chcolate', 1.25, 37),
+            ('Marshmallows', 4.35, 21),
+            ('Graham Crackers ', 8.43 , 14),
+            ('Ice Cream', 3.50 , 59 ),
+            ('Hot Dog', 6.50, 16),
+            ('Hamburger', 6.50, 13),
+        ]
+    myCursor.executemany(fillConcessions,concessions)
+    
+
+def insertCampsites():
+    fillCampsites = "INSERT INTO Campsite (Sitename, Price) VALUES (%s, %s)"
+    campsites =[
+        ('A01', 15.75),
+        ('A02', 15.75),
+        ('A03', 15.75),
+        ('A04', 15.75),
+        ('A05', 15.75),
+        ('A06', 15.75),
+        ('A07', 15.75),
+        ('A08', 15.75),
+        ('A09', 15.75),
+        ('A10', 15.75),
+        ('B01', 10.29),
+        ('B02', 10.29),
+        ('B03', 10.29),
+        ('B04', 10.29),
+        ('B05', 10.29),
+        ('B06', 10.29),
+        ('B07', 10.29),
+        ('B08', 10.29),
+        ('B09', 10.29),
+        ('B10', 10.29),
+        ('C01', 38.83),
+        ('C02', 38.83),
+        ('C03', 38.83),
+        ('C04', 38.83),
+        ('C05', 38.83),
+        ('C06', 38.83),
+        ('C07', 38.83),
+        ('C08', 38.83),
+        ('C09', 38.83),
+        ('C10', 38.83),
+    ]
+    myCursor.executemany(fillCampsites, campsites)
+
 def main():
     initialize_database()
     insert_watercraft()
     insert_shelters()
     insert_households()
+    fillConcessions()
+    insertCampsites()
     print("All inserts complete.")
 
 if __name__ == "__main__":
