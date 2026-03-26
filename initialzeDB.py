@@ -138,11 +138,16 @@ def delete():
 def main():
     #Connect to the database
     initialize_database()
-    
+     
     delete()
     #Creates the needed tables
     makeTables()
 
+    myCursor.execute("DESC Campsite")
+    myResult = myCursor.fetchall()
+
+    for x in myResult:
+        print(x)
     
     
 
