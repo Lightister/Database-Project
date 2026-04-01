@@ -79,10 +79,10 @@ def campsiteReservationOption():
             print(x)
         
     def makeNewReservation():
-        householdNum = int(input("Enter household number:"))
-        campsiteName = (input("Enter campsite to book:"))
-        startDate = input("Enter start date:")
-        endDate = input("Enter end date:")
+        householdNum = int(input("Enter household number: "))
+        campsiteName = (input("Enter campsite to book: "))
+        startDate = input("Enter start date: ")
+        endDate = input("Enter end date: ")
 
         
         db.start_transaction()
@@ -155,10 +155,27 @@ def campsiteReservationOption():
         
         
     def seeHouseholdReservations():
-        print("h")
+        householdNum = int(input("Enter household number: "))
+        myCursor.execute("""
+        SELECT * FROM CampsiteBooking
+        WHERE HouseholdNum = %(householdNum)s
+        ORDER BY StartDate ASC;
+""", {"householdNum": householdNum}
+) 
+        myResult = myCursor.fetchall()
+
+        for x in myResult:
+            print(x)
     
     def reservationsForDate():
-        print("g")
+        myCursor.execute("""
+        SELECT * FROM CampsiteBooking
+        ORDER BY StartDate ASC;
+""")
+        myResult = myCursor.fetchall()
+
+        for x in myResult:
+            print(x)
     
     endSubMenu = False
     while(not endSubMenu):
