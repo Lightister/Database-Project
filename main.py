@@ -1,6 +1,6 @@
 """Authors: Bryan Erickson and Aidan Adams
 
-!!!!!!! Run 'initializeDB.py' before using this program !!!!!!!
+!!!!!!! Run 'initializeDB.py' and 'Generator.py' before using this program !!!!!!!
 """
 import mysql.connector
 
@@ -85,7 +85,7 @@ def campsiteReservationOption():
         endDate = input("Enter end date:")
 
         
-
+        db.start_transaction()
         myCursor.execute("""
         INSERT INTO CampsiteBooking (HouseholdNum, CampsiteID, Cost, NumOfNightsBooked, StartDate, EndDate)
                          SELECT %(householdNum)s, c.CampsiteID, c.Price * DATEDIFF(%(endDate)s, %(startDate)s), DATEDIFF(%(endDate)s, %(startDate)s), %(startDate)s , %(endDate)s
@@ -128,7 +128,29 @@ def campsiteReservationOption():
                             "startDate": startDate,
                             "endDate": endDate
                         })
-        print("Rows inserted:", myCursor.rowcount) 
+        
+        if myCursor.rowcount == 0:
+            print("There was an error when booking, your booking was not entered.")
+            db.rollback()
+        else:
+            print("Booking added successfully")
+            myCursor.execute(
+            """
+            UPDATE Household
+            INNER JOIN Campsite AS c ON %(campsiteName)s = c.SiteName
+            SET Balance = (Balance + c.Price * DATEDIFF(%(endDate)s, %(startDate)s))
+            WHERE HouseHoldNum = %(householdNum)s
+            
+
+            """,{
+                 "householdNum": householdNum,
+                "campsiteName": campsiteName,
+                "startDate": startDate,
+                "endDate": endDate
+            }
+
+            )
+            db.commit()
      
         
         
@@ -183,7 +205,7 @@ def mainMenu():
         elif menuOption == 4:
             showShelters()
         elif menuOption == 5:
-            print("option selected")
+            showHouseholds()
         elif menuOption == 6:
             campsiteReservationOption()
         else:
