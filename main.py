@@ -176,6 +176,20 @@ def campsiteReservationOption():
 
         for x in myResult:
             print(x)
+
+    def avgStayLength():
+        myCursor.execute("""
+        SELECT cb.CampsiteID, c.SiteName, AVG(cb.NumOfNightsBooked) AS AvgNightsBooked
+        FROM CampsiteBooking AS cb
+        INNER JOIN Campsite AS c ON cb.CampsiteID = c.CampsiteID
+        GROUP BY cb.CampsiteID, c.SiteName
+        ORDER BY AvgNightsBooked ASC;
+
+""")
+        myResult = myCursor.fetchall()
+
+        for x in myResult:
+            print(x)
     
     endSubMenu = False
     while(not endSubMenu):
@@ -184,6 +198,7 @@ def campsiteReservationOption():
         print("2: Make new reservation")
         print("3: See all reservations for a household")
         print("4: See all by date")
+        print("5: See average stay length by site")
         menuOption = int(input("Option: "))
         
         if menuOption == 1:
@@ -194,6 +209,8 @@ def campsiteReservationOption():
             seeHouseholdReservations()
         elif menuOption == 4:
            reservationsForDate()
+        elif menuOption ==5:
+            avgStayLength()
         else:
             endSubMenu = True
 
