@@ -133,6 +133,7 @@ def campsiteReservationOption():
             print("There was an error when booking, your booking was not entered.")
             db.rollback()
         else:
+            #Update the household's balance
             print("Booking added successfully")
             myCursor.execute(
             """
@@ -214,6 +215,90 @@ def campsiteReservationOption():
         else:
             endSubMenu = True
 
+def concessionOptions():
+    def viewAllConcessions():
+        myCursor.execute("""
+        SELECT ItemName, Price
+        FROM Concessions
+        """)
+        myResult = myCursor.fetchall()
+        for x in myResult:
+                print(x)
+
+    def buyConcession():
+        householdNum = int(input("Enter household number: "))
+        itemToBuy = input("Enter the name of the item to buy: ")
+        quantity = int(input("Enter the quantity to buy: "))
+
+        db.start_transaction()
+        myCursor.execute("""
+        INSERT INTO ConcessionRecipt(HouseholdNum, ItemID, Quantity, Cost)
+                        SELECT %(householdNum)s, c.ItemID, %(quantity)s, %(quantity)s * c.Price
+                        FROM Concessions AS c
+                        WHERE c.ItemName = %(itemToBuy)s
+                        AND c.StockAvailable >= %(quantity)s
+
+        """,{
+                "householdNum": householdNum,
+                "itemToBuy": itemToBuy,
+                "quantity": quantity
+        })
+
+        if myCursor.rowcount == 0:
+            print("There was an error, no items have been purchased")
+            db.rollback()
+        else:
+            print("Concession puchased successfully")
+
+            #Add the concession charges to the household
+            myCursor.execute("""
+            UPDATE Household
+                            INNER JOIN Concessions AS c
+                            SET Balance = (Balance + c.Price * %(quantity)s)
+                             WHERE HouseHoldNum = %(householdNum)s
+            """,{
+                "householdNum": householdNum,
+                "quantity": quantity
+                })
+            
+            #Update the stock available
+            myCursor.execute("""
+            UPDATE Concessions
+            SET StockAvailable = (StockAvailable - %(quantity)s)
+            WHERE ItemName = %(itemToBuy)s
+            """,{
+                "quantity": quantity,
+                 "itemToBuy": itemToBuy
+            })
+
+            db.commit()
+
+    
+    endSubMenu = False
+    while(not endSubMenu):
+        print("1: View all concessions")
+        print("2: Buy concessions")
+        print("3: See all purchases")
+        print("4: See all concessions by household")
+        print("5: See current stock")
+        print("6: See sales of all items")
+        menuOption = int(input("Option: "))
+
+        if menuOption == 1:
+            viewAllConcessions()
+        elif menuOption == 2:
+            buyConcession()
+        elif menuOption == 3:
+            print("test")
+        elif menuOption == 4:
+            print("test")
+        elif menuOption == 5:
+            print("test")
+        else:
+            endSubMenu = True
+         
+
+
 def mainMenu():
     #Main menu
     endMenu = False
@@ -228,6 +313,7 @@ def mainMenu():
         print("6: Campsite reservation options")
         print("7: Watercraft reservation options")
         print("8: Picnic shelter reservation options")
+        print("9: Concession options")
 
         menuOption = int(input("Option: "))
         if menuOption == 1:
@@ -242,6 +328,8 @@ def mainMenu():
             showHouseholds()
         elif menuOption == 6:
             campsiteReservationOption()
+        elif menuOption == 9:
+            concessionOptions()
         else:
             endMenu = True 
 
