@@ -273,6 +273,48 @@ def concessionOptions():
 
             db.commit()
 
+    def seeStock():
+        myCursor.execute("""
+        SELECT ItemName, StockAvailable
+                         FROM Concessions
+                         ORDER BY StockAvailable ASC;
+
+""")
+        myResult = myCursor.fetchall()
+        for x in myResult:
+                print(x)
+
+    def viewPurchases():
+        myCursor.execute("""
+        SELECT * FROM ConcessionRecipt
+""")
+        myResult = myCursor.fetchall()
+        for x in myResult:
+                print(x)
+
+    def viewPurchasesByHousehold():
+        householdNum = int(input("Enter household number: "))
+        myCursor.execute("""
+        SELECT * FROM ConcessionRecipt
+                         WHERE HouseholdNum = %(householdNum)s
+""",{"householdNum" : householdNum})
+        myResult = myCursor.fetchall()
+        for x in myResult:
+                print(x)
+
+    
+    def itemSaleSummary():
+        myCursor.execute("""
+        SELECT cr.ItemID, c.ItemName, COUNT(*) AS AmountSold, COUNT(*) * c.Price AS TotalSale
+                         FROM ConcessionRecipt AS cr
+                         INNER JOIN Concessions AS c ON cr.ItemID = c.ItemID
+                         GROUP BY cr.ItemID, c.ItemName
+                         ORDER BY AmountSold ASC, TotalSale ASC
+""")
+        myResult = myCursor.fetchall()
+        for x in myResult:
+                print(x)
+
     
     endSubMenu = False
     while(not endSubMenu):
@@ -281,7 +323,7 @@ def concessionOptions():
         print("3: See all purchases")
         print("4: See all concessions by household")
         print("5: See current stock")
-        print("6: See sales of all items")
+        print("6: See sale summary of all items")
         menuOption = int(input("Option: "))
 
         if menuOption == 1:
@@ -289,11 +331,13 @@ def concessionOptions():
         elif menuOption == 2:
             buyConcession()
         elif menuOption == 3:
-            print("test")
+            viewPurchases()
         elif menuOption == 4:
-            print("test")
+            viewPurchasesByHousehold()
         elif menuOption == 5:
-            print("test")
+            seeStock()
+        elif menuOption == 6:
+            itemSaleSummary()
         else:
             endSubMenu = True
          
