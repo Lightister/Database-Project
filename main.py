@@ -23,10 +23,7 @@ def initialize_database():
     myCursor.execute("USE Campground")
 
 
-def showCampsites():
-    myCursor.execute("""
-    SELECT * FROM Campsite
-""")
+
     
     myResult = myCursor.fetchall()
 
@@ -58,12 +55,6 @@ def showShelters():
     SELECT * FROM PicnicShelters
     """)
 
-    myResult = myCursor.fetchall()
-
-    for x in myResult:
-        print(x)
-def showConcessions():
-    myCursor.execute("SELECT * FROM Concessions")
     myResult = myCursor.fetchall()
 
     for x in myResult:
@@ -349,31 +340,27 @@ def mainMenu():
 
     while(not endMenu):
         print("Select an option:")
-        print("1: Show all campsites")
-        print("2: Show all concessions")
+        print("1: Show Campsite reservationoptions")
+        print("2: Concession options")
         print("3: Show all watercraft")
         print("4: Show all picnic shelters")
-        print("5: Add new household")
-        print("6: Campsite reservation options")
-        print("7: Watercraft reservation options")
-        print("8: Picnic shelter reservation options")
-        print("9: Concession options")
+        print("5: Show households")
+        print("6: Watercraft reservation options")
+        print("7: Picnic shelter reservation options")
+        
 
         menuOption = int(input("Option: "))
         if menuOption == 1:
-            showCampsites()
+            campsiteReservationOption()
         elif menuOption == 2:
-            showConcessions()
+            concessionOptions()
         elif menuOption == 3:
             showWatercraft()
         elif menuOption == 4:
             showShelters()
         elif menuOption == 5:
             showHouseholds()
-        elif menuOption == 6:
-            campsiteReservationOption()
-        elif menuOption == 9:
-            concessionOptions()
+           
         else:
             endMenu = True 
 
