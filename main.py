@@ -27,6 +27,7 @@ def initialize_database():
         print(x)
 
 
+
 def showHouseholds():
     myCursor.execute(
         """
@@ -38,7 +39,63 @@ def showHouseholds():
 
     for x in myResult:
         print(x)
+##Shows all shelter reservations and the households that are suing them
+def showShelterReservations()
+    myCursor.execute(
+        """
+    SELECT ShelterId, HouseholdNum 
+    FROM Reservations, PicnicShelters 
+    WHERE HouseholdNum = HouseholdNum
+    """
+    )
 
+##Show all reciepts with item costs and names
+def purchasedItems()
+    myCursor.execute(
+        """
+    SELECT ItemId, ItemName, Price
+    FROM ConcessionRecipt, Concessions
+    WHERE ItemId = ItemId
+    """
+    )
+
+##Shows the average price of all watercraft
+def WatercraftAvg() 
+    myCursor.execute(
+        """
+    SELECT WaterCraftID, AVG(Price) AS Mean_Price
+    FROM Watercraft
+    GROUP BY
+    WaterCraftID
+    """
+    )
+
+##Find all households with zero or negative balance with a booked campsite
+def OverDue()
+    myCursor.execute(
+    """
+    SELECT * FROM CampsiteBooking
+    WHERE HouseholdNum IN (
+        Select HouseholdNum FROM Household
+        WHERE Balance <=0
+    )
+    """
+    )
+
+## Find all concession receipts with cost less than price(for discounts)
+def discountedItems()
+    myCursor.execute(
+        """
+    SELECT * FROM ConcessionRecipt
+    WHERE Cost < (
+        SELECT Price FROM Concessions
+        WHERE Concessions.ItemID = ConcessionRecipt.ItemID
+    )
+    """
+    )
+
+## Check if any item out of stock
+## see if this runs later σ_{StockAvailable < 1}(Concessions)
 
 def showWaterReservations():
     myCursor.execute(
