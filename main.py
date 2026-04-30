@@ -27,82 +27,75 @@ def initialize_database():
         print(x)
 
 
-
 def showHouseholds():
-    myCursor.execute(
-        """
+    myCursor.execute("""
     SELECT * FROM Household
-    """
-    )
+    """)
 
     myResult = myCursor.fetchall()
 
     for x in myResult:
         print(x)
+
+
 ##Shows all shelter reservations and the households that are suing them
 def showShelterReservations():
-    myCursor.execute(
-        """
+    myCursor.execute("""
     SELECT ShelterId, HouseholdNum 
     FROM Reservations, PicnicShelters 
     WHERE HouseholdNum = HouseholdNum
-    """
-    )
+    """)
+
 
 ##Show all reciepts with item costs and names
 def purchasedItems():
-    myCursor.execute(
-        """
+    myCursor.execute("""
     SELECT ItemId, ItemName, Price
     FROM ConcessionRecipt, Concessions
     WHERE ItemId = ItemId
-    """
-    )
+    """)
+
 
 ##Shows the average price of all watercraft
 def WatercraftAvg():
-    myCursor.execute(
-        """
+    myCursor.execute("""
     SELECT WaterCraftID, AVG(Price) AS Mean_Price
     FROM Watercraft
     GROUP BY
     WaterCraftID
-    """
-    )
+    """)
+
 
 ##Find all households with zero or negative balance with a booked campsite
 def OverDue():
-    myCursor.execute(
-    """
+    myCursor.execute("""
     SELECT * FROM CampsiteBooking
     WHERE HouseholdNum IN (
         Select HouseholdNum FROM Household
         WHERE Balance <=0
     )
-    """
-    )
+    """)
+
 
 ## Find all concession receipts with cost less than price(for discounts)
 def discountedItems():
-    myCursor.execute(
-        """
+    myCursor.execute("""
     SELECT * FROM ConcessionRecipt
     WHERE Cost < (
         SELECT Price FROM Concessions
         WHERE Concessions.ItemID = ConcessionRecipt.ItemID
     )
-    """
-    )
+    """)
+
 
 ## Check if any item out of stock
 ## see if this runs later σ_{StockAvailable < 1}(Concessions)
 
+
 def showWaterReservations():
-    myCursor.execute(
-        """
+    myCursor.execute("""
     SELECT WaterCraftId, HouseholdNum FROM Reservations, Watercraft WHERE HouseholdNum = HouseholdNum
-    """
-    )
+    """)
 
 
 def showWatercraft():
@@ -114,11 +107,9 @@ def showWatercraft():
 
 
 def showShelters():
-    myCursor.execute(
-        """
+    myCursor.execute("""
     SELECT * FROM PicnicShelters
-    """
-    )
+    """)
 
     myResult = myCursor.fetchall()
 
@@ -142,13 +133,14 @@ def campsiteReservationOption():
 
         db.start_transaction()
 
-        #Procedure to make a campsite reservation
-        myCursor.callproc("MakeCampsiteReservation",[
-            householdNum,
-            campsiteName,
-            startDate,
-            endDate
-        ])
+        # Procedure call to make a campsite reservation
+        myCursor.callproc(
+            "MakeCampsiteReservation", [householdNum, campsiteName, startDate, endDate]
+        )
+        myResult = myCursor.fetchall()
+
+        for x in myResult:
+            print(x)
 
         if myCursor.rowcount == 0:
             print("There was an error when booking, your booking was not entered.")
@@ -190,28 +182,24 @@ def campsiteReservationOption():
             print(x)
 
     def reservationsForDate():
-        myCursor.execute(
-            """
+        myCursor.execute("""
         SELECT * FROM CampsiteBooking
         ORDER BY StartDate ASC;
-"""
-        )
+""")
         myResult = myCursor.fetchall()
 
         for x in myResult:
             print(x)
 
     def avgStayLength():
-        myCursor.execute(
-            """
+        myCursor.execute("""
         SELECT cb.CampsiteID, c.SiteName, AVG(cb.NumOfNightsBooked) AS AvgNightsBooked
         FROM CampsiteBooking AS cb
         INNER JOIN Campsite AS c ON cb.CampsiteID = c.CampsiteID
         GROUP BY cb.CampsiteID, c.SiteName
         ORDER BY AvgNightsBooked ASC;
 
-"""
-        )
+""")
         myResult = myCursor.fetchall()
 
         for x in myResult:
@@ -262,15 +250,24 @@ def campsiteReservationOption():
 
     def addIndex():
         myCursor.execute("""
-    CREATE INDEX idx_householdDate
+    CREATE INDEX householdDateIDX
                          ON CampsiteBooking (HouseholdNum, StartDate, EndDate)
 
+""")
+        myCursor.execute("""
+        CREATE INDEX campsiteNameIDX
+                         ON Campsite (SiteName)
 
 """)
+
     def dropIndex():
         myCursor.execute("""
         ALTER TABLE CampsiteBooking
-                         DROP INDEX IF EXISTS idx_householdDate;
+                         DROP INDEX householdDateIDX;
+""")
+        myCursor.execute("""
+        ALTER TABLE Campsite
+                         DROP INDEX campsiteNameIDX
 """)
 
     endSubMenu = False
@@ -309,12 +306,10 @@ def campsiteReservationOption():
 
 def concessionOptions():
     def viewAllConcessions():
-        myCursor.execute(
-            """
+        myCursor.execute("""
         SELECT ItemName, Price
         FROM Concessions
-        """
-        )
+        """)
         myResult = myCursor.fetchall()
         for x in myResult:
             print(x)
@@ -371,24 +366,20 @@ def concessionOptions():
             db.commit()
 
     def seeStock():
-        myCursor.execute(
-            """
+        myCursor.execute("""
         SELECT ItemName, StockAvailable
                          FROM Concessions
                          ORDER BY StockAvailable ASC;
 
-"""
-        )
+""")
         myResult = myCursor.fetchall()
         for x in myResult:
             print(x)
 
     def viewPurchases():
-        myCursor.execute(
-            """
+        myCursor.execute("""
         SELECT * FROM ConcessionRecipt
-"""
-        )
+""")
         myResult = myCursor.fetchall()
         for x in myResult:
             print(x)
@@ -407,15 +398,13 @@ def concessionOptions():
             print(x)
 
     def itemSaleSummary():
-        myCursor.execute(
-            """
+        myCursor.execute("""
         SELECT cr.ItemID, c.ItemName, COUNT(*) AS AmountSold, COUNT(*) * c.Price AS TotalSale
                          FROM ConcessionRecipt AS cr
                          INNER JOIN Concessions AS c ON cr.ItemID = c.ItemID
                          GROUP BY cr.ItemID, c.ItemName
                          ORDER BY AmountSold ASC, TotalSale ASC
-"""
-        )
+""")
         myResult = myCursor.fetchall()
         for x in myResult:
             print(x)
