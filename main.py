@@ -231,7 +231,7 @@ def campsiteReservationOption():
             # Delete reservation and update household balance
             myCursor.execute(
                 """  
-            DELETE FROM CampsiteBooking
+           DELETE FROM CampsiteBooking
                         WHERE HouseholdNum = %(householdNum)s
                          AND StartDate = %(startDate)s
 """,
@@ -251,24 +251,39 @@ def campsiteReservationOption():
     def addIndex():
         myCursor.execute("""
     CREATE INDEX householdDateIDX
-                         ON CampsiteBooking (HouseholdNum, StartDate, EndDate)
+                         ON CampsiteBooking (HouseholdNum, StartDate)
 
 """)
-        myCursor.execute("""
-        CREATE INDEX campsiteNameIDX
-                         ON Campsite (SiteName)
 
-""")
+        print("Index added")
 
     def dropIndex():
         myCursor.execute("""
         ALTER TABLE CampsiteBooking
                          DROP INDEX householdDateIDX;
 """)
-        myCursor.execute("""
-        ALTER TABLE Campsite
-                         DROP INDEX campsiteNameIDX
-""")
+        print("Index dropped")
+
+    def testIndex():
+        householdNum = int(input("Enter household number: "))
+        startDate = input("Enter start date: ")
+
+        myCursor.execute(
+            """
+    EXPLAIN SELECT *
+                         FROM CampsiteBooking
+                         WHERE HouseholdNum = %(householdNum)s
+                         AND StartDate = %(startDate)s
+""",
+            {
+                "householdNum": householdNum,
+                "startDate": startDate,
+            },
+        )
+        myResult = myCursor.fetchall()
+
+        for x in myResult:
+            print(x)
 
     endSubMenu = False
     while not endSubMenu:
@@ -281,6 +296,8 @@ def campsiteReservationOption():
         print("6: Delete a reservation")
         print("7: Add index")
         print("8: Drop index")
+        print("9: Index test query")
+
         menuOption = int(input("Option: "))
 
         if menuOption == 1:
@@ -299,6 +316,8 @@ def campsiteReservationOption():
             addIndex()
         elif menuOption == 8:
             dropIndex()
+        elif menuOption == 9:
+            testIndex()
 
         else:
             endSubMenu = True
