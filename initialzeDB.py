@@ -135,7 +135,58 @@ def delete():
     myCursor.execute("DROP TABLE IF EXISTS Watercraft")
     myCursor.execute("DROP TABLE IF EXISTS Concessions")
     myCursor.execute("DROP TABLE IF EXISTS Household")
-    
+
+
+def makeProcedure():
+    myCursor.execute("""
+    DROP PROCEDURE IF EXISTS MakeCampsiteReservation
+""")
+    myCursor.execute("""
+
+CREATE PROCEDURE MakeCampsiteReservation(
+                     IN p_householdNum INT,
+                     IN p_campsiteName VARCHAR(100),
+                     IN p_startDate DATE,
+                     IN p_endDate DATE
+                     )
+                     BEGIN
+
+                     INSERT INTO CampsiteBooking (HouseholdNum, CampsiteID, Cost, NumOfNightsBooked, StartDate, EndDate)
+                         SELECT p_householdNum, c.CampsiteID, c.Price * DATEDIFF(p_endDate, p_startDate), DATEDIFF(p_endDate, p_startDate), p_startDate , p_endDate
+                         FROM Campsite AS c
+                         
+                         WHERE c.SiteName = p_campsiteName
+
+                         AND
+                            (DATEDIFF(p_endDate, p_startDate)) <= 14
+                         AND
+                         (
+                         SELECT COALESCE(SUM(DATEDIFF(EndDate, StartDate)), 0)
+                         FROM CampsiteBooking
+                         WHERE HouseholdNum = p_householdNum
+                         AND StartDate >= DATE_SUB(p_startDate, INTERVAL 30 DAY)
+                         
+                         ) + DATEDIFF(p_endDate, p_startDate) <= 14
+
+                         AND NOT EXISTS
+                         (SELECT 1
+                         FROM Campsitebooking AS c
+                         WHERE c.HouseholdNum =  p_householdNum 
+                         AND ((p_startDate BETWEEN c.StartDate AND c.EndDate)
+                         OR (p_endDate BETWEEN c.StartDate AND c.EndDate)) 
+                         )
+
+                         AND NOT EXISTS
+                         (
+                         SELECT 1 
+                         FROM Campsitebooking AS c
+                         WHERE c.SiteName = p_campsiteName 
+                         AND ((p_startDate BETWEEN c.StartDate AND c.EndDate)
+                         OR (p_endDate BETWEEN c.StartDate AND c.EndDate))
+                         );
+                        END
+
+""")
 
 def main():
     #Connect to the database
@@ -145,11 +196,7 @@ def main():
     #Creates the needed tables
     makeTables()
 
-    myCursor.execute("DESC Campsite")
-    myResult = myCursor.fetchall()
-
-    for x in myResult:
-        print(x)
+    makeProcedure()
     
     
 

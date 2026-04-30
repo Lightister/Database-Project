@@ -40,7 +40,7 @@ def showHouseholds():
     for x in myResult:
         print(x)
 ##Shows all shelter reservations and the households that are suing them
-def showShelterReservations()
+def showShelterReservations():
     myCursor.execute(
         """
     SELECT ShelterId, HouseholdNum 
@@ -50,7 +50,7 @@ def showShelterReservations()
     )
 
 ##Show all reciepts with item costs and names
-def purchasedItems()
+def purchasedItems():
     myCursor.execute(
         """
     SELECT ItemId, ItemName, Price
@@ -60,7 +60,7 @@ def purchasedItems()
     )
 
 ##Shows the average price of all watercraft
-def WatercraftAvg() 
+def WatercraftAvg():
     myCursor.execute(
         """
     SELECT WaterCraftID, AVG(Price) AS Mean_Price
@@ -71,7 +71,7 @@ def WatercraftAvg()
     )
 
 ##Find all households with zero or negative balance with a booked campsite
-def OverDue()
+def OverDue():
     myCursor.execute(
     """
     SELECT * FROM CampsiteBooking
@@ -83,7 +83,7 @@ def OverDue()
     )
 
 ## Find all concession receipts with cost less than price(for discounts)
-def discountedItems()
+def discountedItems():
     myCursor.execute(
         """
     SELECT * FROM ConcessionRecipt
@@ -141,51 +141,14 @@ def campsiteReservationOption():
         endDate = input("Enter end date: ")
 
         db.start_transaction()
-        myCursor.execute(
-            """
-        INSERT INTO CampsiteBooking (HouseholdNum, CampsiteID, Cost, NumOfNightsBooked, StartDate, EndDate)
-                         SELECT %(householdNum)s, c.CampsiteID, c.Price * DATEDIFF(%(endDate)s, %(startDate)s), DATEDIFF(%(endDate)s, %(startDate)s), %(startDate)s , %(endDate)s
-                         FROM Campsite AS c
-                         
-                         WHERE c.SiteName = %(campsiteName)s
 
-                         AND
-                            (DATEDIFF(%(endDate)s, %(startDate)s)) <= 14
-                         AND
-                         (
-                         SELECT COALESCE(SUM(DATEDIFF(EndDate, StartDate)), 0)
-                         FROM CampsiteBooking
-                         WHERE HouseholdNum = %(householdNum)s
-                         AND StartDate >= DATE_SUB(%(startDate)s, INTERVAL 30 DAY)
-                         
-                         ) + DATEDIFF(%(endDate)s, %(startDate)s) <= 14
-
-                         AND NOT EXISTS
-                         (SELECT 1
-                         FROM Campsitebooking AS c
-                         WHERE c.HouseholdNum =  %(householdNum)s 
-                         AND ((%(startDate)s BETWEEN c.StartDate AND c.EndDate)
-                         OR (%(endDate)s BETWEEN c.StartDate AND c.EndDate)) 
-                         )
-
-                         AND NOT EXISTS
-                         (
-                         SELECT 1 
-                         FROM Campsitebooking AS c
-                         WHERE c.SiteName = %(campsiteName)s 
-                         AND ((%(startDate)s BETWEEN c.StartDate AND c.EndDate)
-                         OR (%(endDate)s BETWEEN c.StartDate AND c.EndDate))
-                         )
-                        
-
-                        """,
-            {
-                "householdNum": householdNum,
-                "campsiteName": campsiteName,
-                "startDate": startDate,
-                "endDate": endDate,
-            },
-        )
+        #Procedure to make a campsite reservation
+        myCursor.callproc("MakeCampsiteReservation",[
+            householdNum,
+            campsiteName,
+            startDate,
+            endDate
+        ])
 
         if myCursor.rowcount == 0:
             print("There was an error when booking, your booking was not entered.")
@@ -297,6 +260,19 @@ def campsiteReservationOption():
             )
             db.commit()
 
+    def addIndex():
+        myCursor.execute("""
+    CREATE INDEX idx_householdDate
+                         ON CampsiteBooking (HouseholdNum, StartDate, EndDate)
+
+
+""")
+    def dropIndex():
+        myCursor.execute("""
+        ALTER TABLE CampsiteBooking
+                         DROP INDEX IF EXISTS idx_householdDate;
+""")
+
     endSubMenu = False
     while not endSubMenu:
         print("Select an option:")
@@ -306,6 +282,8 @@ def campsiteReservationOption():
         print("4: See all by date")
         print("5: See average stay length by site")
         print("6: Delete a reservation")
+        print("7: Add index")
+        print("8: Drop index")
         menuOption = int(input("Option: "))
 
         if menuOption == 1:
@@ -320,6 +298,11 @@ def campsiteReservationOption():
             avgStayLength()
         elif menuOption == 6:
             deleteReservation()
+        elif menuOption == 7:
+            addIndex()
+        elif menuOption == 8:
+            dropIndex()
+
         else:
             endSubMenu = True
 
@@ -469,7 +452,7 @@ def mainMenu():
 
     while not endMenu:
         print("Select an option:")
-        print("1: Show Campsite reservationoptions")
+        print("1: Show Campsite reservation options")
         print("2: Concession options")
         print("3: Show all watercraft")
         print("4: Show all picnic shelters")
