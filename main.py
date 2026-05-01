@@ -4,6 +4,7 @@
 """
 
 import mysql.connector
+from tabulate import tabulate
 
 
 def initialize_database():
@@ -32,10 +33,10 @@ def showHouseholds():
     SELECT * FROM Household
     """)
 
-    myResult = myCursor.fetchall()
+    rows = myCursor.fetchall()
+    headers = [col[0] for col in myCursor.description]
 
-    for x in myResult:
-        print(x)
+    print(tabulate(rows, headers=headers, tablefmt="grid"))
 
 
 ##Shows all shelter reservations and the households that are suing them
@@ -100,10 +101,10 @@ def showWaterReservations():
 
 def showWatercraft():
     myCursor.execute("SELECT * FROM Watercraft")
-    myResult = myCursor.fetchall()
+    rows = myCursor.fetchall()
+    headers = [col[0] for col in myCursor.description]
 
-    for x in myResult:
-        print(x)
+    print(tabulate(rows, headers=headers, tablefmt="grid"))
 
 
 def showShelters():
@@ -111,19 +112,19 @@ def showShelters():
     SELECT * FROM PicnicShelters
     """)
 
-    myResult = myCursor.fetchall()
+    rows = myCursor.fetchall()
+    headers = [col[0] for col in myCursor.description]
 
-    for x in myResult:
-        print(x)
+    print(tabulate(rows, headers=headers, tablefmt="grid"))
 
 
 def campsiteReservationOption():
     def viewAllReservations():
         myCursor.execute("SELECT * FROM CampsiteBooking")
-        myResult = myCursor.fetchall()
+        rows = myCursor.fetchall()
+        headers = [col[0] for col in myCursor.description]
 
-        for x in myResult:
-            print(x)
+        print(tabulate(rows, headers=headers, tablefmt="grid"))
 
     def makeNewReservation():
         householdNum = int(input("Enter household number: "))
@@ -137,10 +138,6 @@ def campsiteReservationOption():
         myCursor.callproc(
             "MakeCampsiteReservation", [householdNum, campsiteName, startDate, endDate]
         )
-        myResult = myCursor.fetchall()
-
-        for x in myResult:
-            print(x)
 
         if myCursor.rowcount == 0:
             print("There was an error when booking, your booking was not entered.")
@@ -176,20 +173,20 @@ def campsiteReservationOption():
 """,
             {"householdNum": householdNum},
         )
-        myResult = myCursor.fetchall()
+        rows = myCursor.fetchall()
+        headers = [col[0] for col in myCursor.description]
 
-        for x in myResult:
-            print(x)
+        print(tabulate(rows, headers=headers, tablefmt="grid"))
 
     def reservationsForDate():
         myCursor.execute("""
         SELECT * FROM CampsiteBooking
         ORDER BY StartDate ASC;
 """)
-        myResult = myCursor.fetchall()
+        rows = myCursor.fetchall()
+        headers = [col[0] for col in myCursor.description]
 
-        for x in myResult:
-            print(x)
+        print(tabulate(rows, headers=headers, tablefmt="grid"))
 
     def avgStayLength():
         myCursor.execute("""
@@ -200,10 +197,10 @@ def campsiteReservationOption():
         ORDER BY AvgNightsBooked ASC;
 
 """)
-        myResult = myCursor.fetchall()
+        rows = myCursor.fetchall()
+        headers = [col[0] for col in myCursor.description]
 
-        for x in myResult:
-            print(x)
+        print(tabulate(rows, headers=headers, tablefmt="grid"))
 
     def deleteReservation():
         householdNum = int(input("Enter household number: "))
@@ -280,10 +277,10 @@ def campsiteReservationOption():
                 "startDate": startDate,
             },
         )
-        myResult = myCursor.fetchall()
+        rows = myCursor.fetchall()
+        headers = [col[0] for col in myCursor.description]
 
-        for x in myResult:
-            print(x)
+        print(tabulate(rows, headers=headers, tablefmt="grid"))
 
     endSubMenu = False
     while not endSubMenu:
@@ -329,9 +326,12 @@ def concessionOptions():
         SELECT ItemName, Price
         FROM Concessions
         """)
-        myResult = myCursor.fetchall()
-        for x in myResult:
-            print(x)
+
+        rows = myCursor.fetchall()
+        headers = [col[0] for col in myCursor.description]
+
+        print(tabulate(rows, headers=headers, tablefmt="grid"))
+     
 
     def buyConcession():
         householdNum = int(input("Enter household number: "))
@@ -392,17 +392,19 @@ def concessionOptions():
 
 """)
 
-        myResult = myCursor.fetchall()
-        for x in myResult:
-            print(x)
+        rows = myCursor.fetchall()
+        headers = [col[0] for col in myCursor.description]
+
+        print(tabulate(rows, headers=headers, tablefmt="grid"))
 
     def viewPurchases():
         myCursor.execute("""
         SELECT * FROM ConcessionRecipt
 """)
-        myResult = myCursor.fetchall()
-        for x in myResult:
-            print(x)
+        rows = myCursor.fetchall()
+        headers = [col[0] for col in myCursor.description]
+
+        print(tabulate(rows, headers=headers, tablefmt="grid"))
 
     def viewPurchasesByHousehold():
         householdNum = int(input("Enter household number: "))
@@ -419,9 +421,10 @@ def concessionOptions():
                          WHERE HouseholdNum = %(householdNum)s """,
             {"householdNum": householdNum},
         )
-        myResult = myCursor.fetchall()
-        for x in myResult:
-            print(x)
+        rows = myCursor.fetchall()
+        headers = [col[0] for col in myCursor.description]
+
+        print(tabulate(rows, headers=headers, tablefmt="grid"))
 
     def itemSaleSummary():
         myCursor.execute("""
@@ -431,9 +434,10 @@ def concessionOptions():
                          GROUP BY cr.ItemID, c.ItemName
                          ORDER BY AmountSold ASC, TotalSale ASC
 """)
-        myResult = myCursor.fetchall()
-        for x in myResult:
-            print(x)
+        rows = myCursor.fetchall()
+        headers = [col[0] for col in myCursor.description]
+
+        print(tabulate(rows, headers=headers, tablefmt="grid"))
 
     def addIndex():
         myCursor.execute(""" 
@@ -461,10 +465,10 @@ def concessionOptions():
 """,
             {"quantity": quantity, "cost": cost},
         )
-        myResult = myCursor.fetchall()
+        rows = myCursor.fetchall()
+        headers = [col[0] for col in myCursor.description]
 
-        for x in myResult:
-            print(x)
+        print(tabulate(rows, headers=headers, tablefmt="grid"))
 
     endSubMenu = False
     while not endSubMenu:
