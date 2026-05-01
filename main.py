@@ -391,6 +391,7 @@ def concessionOptions():
                          ORDER BY StockAvailable ASC;
 
 """)
+
         myResult = myCursor.fetchall()
         for x in myResult:
             print(x)
@@ -405,13 +406,16 @@ def concessionOptions():
 
     def viewPurchasesByHousehold():
         householdNum = int(input("Enter household number: "))
-        myCursor.execute(
-            """
-        SELECT * FROM ConcessionRecipt
-                         WHERE HouseholdNum = %(householdNum)s
-""",
-            {"householdNum": householdNum},
-        )
+
+        myCursor.execute(""" DROP VIEW IF EXISTS PurchasesByHousehold """)
+
+        myCursor.execute(""" CREATE VIEW PurchasesByHousehold AS
+                         SELECT *
+                         FROM ConcessionRecipt
+                        """)
+
+        myCursor.execute(""" SELECT * FROM PurchasesByHousehold
+                         WHERE HouseholdNum = %(householdNum)s """,{'householdNum': householdNum})
         myResult = myCursor.fetchall()
         for x in myResult:
             print(x)
