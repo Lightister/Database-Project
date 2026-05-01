@@ -414,8 +414,11 @@ def concessionOptions():
                          FROM ConcessionRecipt
                         """)
 
-        myCursor.execute(""" SELECT * FROM PurchasesByHousehold
-                         WHERE HouseholdNum = %(householdNum)s """,{'householdNum': householdNum})
+        myCursor.execute(
+            """ SELECT * FROM PurchasesByHousehold
+                         WHERE HouseholdNum = %(householdNum)s """,
+            {"householdNum": householdNum},
+        )
         myResult = myCursor.fetchall()
         for x in myResult:
             print(x)
@@ -432,6 +435,37 @@ def concessionOptions():
         for x in myResult:
             print(x)
 
+    def addIndex():
+        myCursor.execute(""" 
+    CREATE INDEX QuantityAndCostIDX
+                         On ConcessionRecipt (Quantity, Cost)
+ """)
+
+    print("Index added")
+
+    def dropIndex():
+        myCursor.execute(""" 
+        ALTER TABLE ConcessionRecipt
+                         DROP INDEX QuantityAndCostIDX
+ """)
+    print("Index Dropped")
+    def testIndex():
+        quantity = int(input("Enter a quantity: "))
+        cost = float(input("Enter a cost: "))
+        myCursor.execute(
+            """  
+    EXPLAIN SELECT *
+                         FROM ConcessionRecipt
+                         WHERE Quantity = %(quantity)s
+                         AND Cost = %(cost)s
+""",
+            {"quantity": quantity, "cost": cost},
+        )
+        myResult = myCursor.fetchall()
+
+        for x in myResult:
+            print(x)
+
     endSubMenu = False
     while not endSubMenu:
         print("1: View all concessions")
@@ -440,6 +474,9 @@ def concessionOptions():
         print("4: See all concessions by household")
         print("5: See current stock")
         print("6: See sale summary of all items")
+        print("7: Create index")
+        print("8: Drop index")
+        print("9: Index test query")
         menuOption = int(input("Option: "))
 
         if menuOption == 1:
@@ -454,6 +491,12 @@ def concessionOptions():
             seeStock()
         elif menuOption == 6:
             itemSaleSummary()
+        elif menuOption == 7:
+            addIndex()
+        elif menuOption == 8:
+            dropIndex()
+        elif menuOption == 9:
+            testIndex()
         else:
             endSubMenu = True
 
