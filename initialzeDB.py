@@ -98,8 +98,8 @@ def makeTables():
     NumOfNightsBooked TINYINT UNSIGNED CHECK (NumOfNightsBooked <= 14),
     StartDate DATE NOT NULL,
     EndDate Date NOT NULL,
-    PRIMARY KEY (HouseHoldNum, CampsiteID, StartDate),
-    FOREIGN KEY (HouseHoldNum) REFERENCES Household(HouseHoldNum) ON DELETE CASCADE,
+    PRIMARY KEY (HouseholdNum, CampsiteID, StartDate),
+    FOREIGN KEY (HouseholdNum) REFERENCES Household(HouseHoldNum) ON DELETE CASCADE,
     FOREIGN KEY (CampsiteID) REFERENCES Campsite(CampsiteID) ON DELETE CASCADE
     )
 
@@ -111,7 +111,7 @@ def makeTables():
     HouseholdNum TINYINT UNSIGNED,
     ItemID TINYINT UNSIGNED,
     Quantity INTEGER UNSIGNED,
-    Cost DECIMAL(4,2),
+    Cost DECIMAL(7,2),
     PRIMARY KEY (HouseHoldNum, ItemID),   
     FOREIGN KEY (HouseHoldNum) REFERENCES Household(HouseHoldNum) ON DELETE CASCADE,                 
     FOREIGN KEY (ItemID) REFERENCES Concessions(ItemID) ON DELETE CASCADE                 

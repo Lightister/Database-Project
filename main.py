@@ -127,41 +127,49 @@ def campsiteReservationOption():
         print(tabulate(rows, headers=headers, tablefmt="grid"))
 
     def makeNewReservation():
-        householdNum = int(input("Enter household number: "))
-        campsiteName = input("Enter campsite to book: ")
-        startDate = input("Enter start date: ")
-        endDate = input("Enter end date: ")
+        try:
+            householdNum = int(input("Enter household number: "))
+            campsiteName = input("Enter campsite to book: ")
+            startDate = input("Enter start date: ")
+            endDate = input("Enter end date: ")
 
-        db.start_transaction()
+            db.start_transaction()
 
-        # Procedure call to make a campsite reservation
-        myCursor.callproc(
-            "MakeCampsiteReservation", [householdNum, campsiteName, startDate, endDate]
-        )
-
-        if myCursor.rowcount == 0:
-            print("There was an error when booking, your booking was not entered.")
-            db.rollback()
-        else:
-            # Update the household's balance
-            print("Booking added successfully")
-            myCursor.execute(
-                """
-            UPDATE Household
-            INNER JOIN Campsite AS c ON %(campsiteName)s = c.SiteName
-            SET Balance = (Balance + c.Price * DATEDIFF(%(endDate)s, %(startDate)s))
-            WHERE HouseHoldNum = %(householdNum)s
-            
-
-            """,
-                {
-                    "householdNum": householdNum,
-                    "campsiteName": campsiteName,
-                    "startDate": startDate,
-                    "endDate": endDate,
-                },
+            # Procedure call to make a campsite reservation
+            myCursor.callproc(
+                "MakeCampsiteReservation", [householdNum, campsiteName, startDate, endDate]
             )
+
+            # Update the household's balance
+            myCursor.execute(
+                    """
+                UPDATE Household
+                INNER JOIN Campsite AS c ON %(campsiteName)s = c.SiteName
+                SET Balance = (Balance + c.Price * DATEDIFF(%(endDate)s, %(startDate)s))
+                WHERE HouseHoldNum = %(householdNum)s
+                
+
+                """,
+                    {
+                        "householdNum": householdNum,
+                        "campsiteName": campsiteName,
+                        "startDate": startDate,
+                        "endDate": endDate,
+                    },
+                )
             db.commit()
+            print("Booking added succesfully")
+        
+        #Handles errors with the database, rolls-back transaction
+        except mysql.connector.Error as dbError:
+            print("Error with the database, transaction rolled-back:", dbError)
+            db.rollback()
+
+        #Handles any other error, rolls-back transaction
+        except Exception as e:
+            print("An error occured, transaction was rolled-back: ", e)
+            db.rollback()
+            
 
     def seeHouseholdReservations():
         householdNum = int(input("Enter household number: "))
@@ -334,61 +342,66 @@ def concessionOptions():
      
 
     def buyConcession():
-        householdNum = int(input("Enter household number: "))
-        itemToBuy = input("Enter the name of the item to buy: ")
-        quantity = int(input("Enter the quantity to buy: "))
+        try: 
+            householdNum = int(input("Enter household number: "))
+            itemToBuy = input("Enter the name of the item to buy: ")
+            quantity = int(input("Enter the quantity to buy: "))
 
-        db.start_transaction()
-        myCursor.execute(
-            """
-        INSERT INTO ConcessionRecipt(HouseholdNum, ItemID, Quantity, Cost)
-                        SELECT %(householdNum)s, c.ItemID, %(quantity)s, %(quantity)s * c.Price
-                        FROM Concessions AS c
-                        WHERE c.ItemName = %(itemToBuy)s
-                        AND c.StockAvailable >= %(quantity)s
+            db.start_transaction()
+            myCursor.execute(
+                """
+            INSERT INTO ConcessionRecipt(HouseholdNum, ItemID, Quantity, Cost)
+                            SELECT %(householdNum)s, c.ItemID, %(quantity)s, %(quantity)s * c.Price
+                            FROM Concessions AS c
+                            WHERE c.ItemName = %(itemToBuy)s
+                            AND c.StockAvailable >= %(quantity)s
 
-        """,
-            {
-                "householdNum": householdNum,
-                "itemToBuy": itemToBuy,
-                "quantity": quantity,
-            },
-        )
-
-        if myCursor.rowcount == 0:
-            print("There was an error, no items have been purchased")
-            db.rollback()
-        else:
-            print("Concession puchased successfully")
+            """,
+                {
+                    "householdNum": householdNum,
+                    "itemToBuy": itemToBuy,
+                    "quantity": quantity,
+                },
+            )
 
             # Add the concession charges to the household
             myCursor.execute(
-                """
-            UPDATE Household
-                            INNER JOIN Concessions AS c
-                            SET Balance = (Balance + c.Price * %(quantity)s)
-                             WHERE HouseHoldNum = %(householdNum)s
-            """,
-                {"householdNum": householdNum, "quantity": quantity},
-            )
+                    """
+                UPDATE Household
+                                INNER JOIN Concessions AS c ON c.ItemName = %(itemToBuy)s
+                                SET Balance = (Balance + c.Price * %(quantity)s)
+                                WHERE HouseHoldNum = %(householdNum)s
+                """,
+                    {"householdNum": householdNum,
+                    "itemToBuy": itemToBuy,
+                    "quantity": quantity},
+                )
 
-            # Update the stock available
+                # Update the stock available
             myCursor.execute(
-                """
-            UPDATE Concessions
-            SET StockAvailable = (StockAvailable - %(quantity)s)
-            WHERE ItemName = %(itemToBuy)s
-            """,
-                {"quantity": quantity, "itemToBuy": itemToBuy},
-            )
-
+                    """
+                UPDATE Concessions
+                SET StockAvailable = (StockAvailable - %(quantity)s)
+                WHERE ItemName = %(itemToBuy)s
+                """,
+                    {"quantity": quantity, "itemToBuy": itemToBuy},
+                )
+            print("Concession puchased successfully")
             db.commit()
+
+        except mysql.connector.Error as dbError:
+            print("Error with the database: ", dbError)
+            db.rollback()
+        except Exception as e:
+            print("There was an error: ", e)
+            db.rollback()
+            
 
     def seeStock():
         myCursor.execute("""
         SELECT ItemName, StockAvailable
                          FROM Concessions
-                         ORDER BY StockAvailable ASC;
+                         ORDER BY StockAvailable;
 
 """)
 
