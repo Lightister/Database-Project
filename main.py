@@ -542,7 +542,7 @@ def main():
     # Display the main menu
     mainMenu()
 
-    print("This is a test message because github is being weird")
+    
 
 
 if __name__ == "__main__":
