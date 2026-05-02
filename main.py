@@ -483,6 +483,46 @@ def concessionOptions():
 
         print(tabulate(rows, headers=headers, tablefmt="grid"))
 
+    def addStock():
+        try:
+            itemName = input("Enter item name: ")
+            addQuantity = int(input("Quantity to add: "))
+
+            db.start_transaction()
+
+            #Confirm that the item exists
+            myCursor.execute(""" 
+            SELECT ItemID
+                             FROM Concessions
+                             WHERE ItemName = %(itemName)s
+ """,{"itemName": itemName})
+            result = myCursor.fetchone()
+
+            #End transaction if item doesn't exist
+            if not result:
+                print("Item doesn't exist")
+                db.rollback()
+                return
+            
+            myCursor.execute(""" SAVEPOINT preStockUpdate """)
+
+            #Update the stock
+            myCursor.execute(""" 
+            UPDATE Concessions
+                             SET StockAvailable = StockAvailable + %(addQuantity)s
+                             WHERE ItemName = %(itemName)s
+
+ """,{"addQuantity": addQuantity,
+      "itemName": itemName})
+            
+            #Commit the stock update
+            db.commit()
+
+        except Exception as e:
+            print("An error occured:", e)
+            myCursor.execute(""" ROLLBACK TO SAVEPOINT preStockUpdate """)
+            db.commit()
+
     endSubMenu = False
     while not endSubMenu:
         print("1: View all concessions")
@@ -494,6 +534,7 @@ def concessionOptions():
         print("7: Create index")
         print("8: Drop index")
         print("9: Index test query")
+        print("10: Add to stock")
         menuOption = int(input("Option: "))
 
         if menuOption == 1:
@@ -514,6 +555,8 @@ def concessionOptions():
             dropIndex()
         elif menuOption == 9:
             testIndex()
+        elif menuOption == 10:
+            addStock()
         else:
             endSubMenu = True
 
