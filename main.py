@@ -4,31 +4,40 @@
 """
 
 import mysql.connector
+from mysql.connector import errorcode
 from tabulate import tabulate
 
 
 def initialize_database():
+
     # Connects to the MySQL server
-    global db
-    db = mysql.connector.connect(
-        host="localhost", user="root", password="wordPass12", autocommit=True
-    )
+    try: 
+        db = mysql.connector.connect(
+            host="localhost", user="root", password="wordPass12", autocommit=True
+        )
 
-    # Creating a global cursor object
-    global myCursor
-    myCursor = db.cursor(buffered=True)
+        myCursor = db.cursor(buffered=True)
 
-    # Creates the database if it doesn't exist and uses it
-    myCursor.execute("CREATE DATABASE IF NOT EXISTS Campground")
-    myCursor.execute("USE Campground")
+        # Creates the database if it doesn't exist and uses it
+        myCursor.execute("CREATE DATABASE IF NOT EXISTS Campground")
+        myCursor.execute("USE Campground")
+        myCursor.close()
 
-    myResult = myCursor.fetchall()
+    except mysql.connector.Error as err:
+        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+            print("Invalid credentials")
+            return
+        elif err.errno == errorcode.ER_BAD_DB_ERROR:
+            print("Database not found")
+            return
+        else:
+            print("Cannot connect to database:", err)
+            return
+    return db
 
-    for x in myResult:
-        print(x)
 
-
-def showHouseholds():
+def showHouseholds(conn):
+    myCursor = conn.cursor()
     myCursor.execute("""
     SELECT * FROM Household
     """)
@@ -37,38 +46,46 @@ def showHouseholds():
     headers = [col[0] for col in myCursor.description]
 
     print(tabulate(rows, headers=headers, tablefmt="grid"))
+    myCursor.close()
 
 
 ##Shows all shelter reservations and the households that are suing them
-def showShelterReservations():
+def showShelterReservations(conn):
+    myCursor = conn.cursor()
     myCursor.execute("""
     SELECT ShelterId, HouseholdNum 
     FROM Reservations, PicnicShelters 
     WHERE HouseholdNum = HouseholdNum
     """)
+    myCursor.close()
 
 
 ##Show all reciepts with item costs and names
-def purchasedItems():
+def purchasedItems(conn):
+    myCursor = conn.cursor()
     myCursor.execute("""
     SELECT ItemId, ItemName, Price
     FROM ConcessionRecipt, Concessions
     WHERE ItemId = ItemId
     """)
+    myCursor.close()
 
 
 ##Shows the average price of all watercraft
-def WatercraftAvg():
+def WatercraftAvg(conn):
+    myCursor = conn.cursor()
     myCursor.execute("""
     SELECT WaterCraftID, AVG(Price) AS Mean_Price
     FROM Watercraft
     GROUP BY
     WaterCraftID
     """)
+    myCursor.close()
 
 
 ##Find all households with zero or negative balance with a booked campsite
-def OverDue():
+def OverDue(conn):
+    myCursor = conn.cursor()
     myCursor.execute("""
     SELECT * FROM CampsiteBooking
     WHERE HouseholdNum IN (
@@ -76,10 +93,12 @@ def OverDue():
         WHERE Balance <=0
     )
     """)
+    myCursor.close()
 
 
 ## Find all concession receipts with cost less than price(for discounts)
-def discountedItems():
+def discountedItems(conn):
+    myCursor = conn.cursor()
     myCursor.execute("""
     SELECT * FROM ConcessionRecipt
     WHERE Cost < (
@@ -87,27 +106,33 @@ def discountedItems():
         WHERE Concessions.ItemID = ConcessionRecipt.ItemID
     )
     """)
+    myCursor.close()
 
 
 ## Check if any item out of stock
 ## see if this runs later σ_{StockAvailable < 1}(Concessions)
 
 
-def showWaterReservations():
+def showWaterReservations(conn):
+    myCursor = conn.cursor()
     myCursor.execute("""
     SELECT WaterCraftId, HouseholdNum FROM Reservations, Watercraft WHERE HouseholdNum = HouseholdNum
     """)
+    myCursor.close()
 
 
-def showWatercraft():
+def showWatercraft(conn):
+    myCursor = conn.cursor()
     myCursor.execute("SELECT * FROM Watercraft")
     rows = myCursor.fetchall()
     headers = [col[0] for col in myCursor.description]
 
     print(tabulate(rows, headers=headers, tablefmt="grid"))
+    myCursor.close()
 
 
-def showShelters():
+def showShelters(conn):
+    myCursor = conn.cursor()
     myCursor.execute("""
     SELECT * FROM PicnicShelters
     """)
@@ -116,24 +141,29 @@ def showShelters():
     headers = [col[0] for col in myCursor.description]
 
     print(tabulate(rows, headers=headers, tablefmt="grid"))
+    myCursor.close()
 
 
-def campsiteReservationOption():
-    def viewAllReservations():
+def campsiteReservationOption(conn):
+    def viewAllReservations(conn):
+        myCursor = conn.cursor()
         myCursor.execute("SELECT * FROM CampsiteBooking")
         rows = myCursor.fetchall()
         headers = [col[0] for col in myCursor.description]
 
         print(tabulate(rows, headers=headers, tablefmt="grid"))
 
-    def makeNewReservation():
+        myCursor.close()
+
+    def makeNewReservation(conn):
         try:
+            myCursor = conn.cursor()
             householdNum = int(input("Enter household number: "))
             campsiteName = input("Enter campsite to book: ")
             startDate = input("Enter start date: ")
             endDate = input("Enter end date: ")
 
-            db.start_transaction()
+            conn.start_transaction()
 
             # Procedure call to make a campsite reservation
             myCursor.callproc(
@@ -157,21 +187,24 @@ def campsiteReservationOption():
                         "endDate": endDate,
                     },
                 )
-            db.commit()
+            conn.commit()
             print("Booking added succesfully")
-        
+            myCursor.close()
+
         #Handles errors with the database, rolls-back transaction
         except mysql.connector.Error as dbError:
             print("Error with the database, transaction rolled-back:", dbError)
-            db.rollback()
+            conn.rollback()
+            myCursor.close()
 
         #Handles any other error, rolls-back transaction
         except Exception as e:
             print("An error occured, transaction was rolled-back: ", e)
-            db.rollback()
-            
+            conn.rollback()
+            myCursor.close()
 
-    def seeHouseholdReservations():
+    def seeHouseholdReservations(conn):
+        myCursor = conn.cursor()
         householdNum = int(input("Enter household number: "))
         myCursor.execute(
             """
@@ -186,7 +219,8 @@ def campsiteReservationOption():
 
         print(tabulate(rows, headers=headers, tablefmt="grid"))
 
-    def reservationsForDate():
+    def reservationsForDate(conn):
+        myCursor = conn.cursor()
         myCursor.execute("""
         SELECT * FROM CampsiteBooking
         ORDER BY StartDate ASC;
@@ -195,8 +229,9 @@ def campsiteReservationOption():
         headers = [col[0] for col in myCursor.description]
 
         print(tabulate(rows, headers=headers, tablefmt="grid"))
-
-    def avgStayLength():
+        myCursor.close()
+    def avgStayLength(conn):
+        myCursor = conn.cursor()
         myCursor.execute("""
         SELECT cb.CampsiteID, c.SiteName, AVG(cb.NumOfNightsBooked) AS AvgNightsBooked
         FROM CampsiteBooking AS cb
@@ -209,12 +244,14 @@ def campsiteReservationOption():
         headers = [col[0] for col in myCursor.description]
 
         print(tabulate(rows, headers=headers, tablefmt="grid"))
+        myCursor.close()
 
-    def deleteReservation():
+    def deleteReservation(conn):
+        myCursor = conn.cursor()
         householdNum = int(input("Enter household number: "))
         startDate = input("Enter start date: ")
 
-        db.start_transaction()
+        conn.start_transaction()
 
         # Get the total price for the booking
         myCursor.execute(
@@ -231,7 +268,8 @@ def campsiteReservationOption():
         if myCursor.rowcount == 0:
             print("A booking for this household number and/or start-date was not found")
             # End transaction if a booking was not found
-            db.rollback()
+            conn.rollback()
+            myCursor.close()
         else:
             # Delete reservation and update household balance
             myCursor.execute(
@@ -251,9 +289,11 @@ def campsiteReservationOption():
 """,
                 {"totalPrice": totalPrice, "householdNum": householdNum},
             )
-            db.commit()
+            conn.commit()
+            myCursor.close()
 
-    def addIndex():
+    def addIndex(conn):
+        myCursor = conn.cursor()
         myCursor.execute("""
     CREATE INDEX householdDateIDX
                          ON CampsiteBooking (HouseholdNum, StartDate)
@@ -261,15 +301,19 @@ def campsiteReservationOption():
 """)
 
         print("Index added")
+        myCursor.close()
 
-    def dropIndex():
+    def dropIndex(conn):
+        myCursor = conn.cursor()
         myCursor.execute("""
         ALTER TABLE CampsiteBooking
                          DROP INDEX householdDateIDX;
 """)
         print("Index dropped")
+        myCursor.close()
 
-    def testIndex():
+    def testIndex(conn):
+        myCursor = conn.cursor()
         householdNum = int(input("Enter household number: "))
         startDate = input("Enter start date: ")
 
@@ -289,6 +333,7 @@ def campsiteReservationOption():
         headers = [col[0] for col in myCursor.description]
 
         print(tabulate(rows, headers=headers, tablefmt="grid"))
+        myCursor.close()
 
     endSubMenu = False
     while not endSubMenu:
@@ -306,30 +351,31 @@ def campsiteReservationOption():
         menuOption = int(input("Option: "))
 
         if menuOption == 1:
-            viewAllReservations()
+            viewAllReservations(conn)
         elif menuOption == 2:
-            makeNewReservation()
+            makeNewReservation(conn)
         elif menuOption == 3:
-            seeHouseholdReservations()
+            seeHouseholdReservations(conn)
         elif menuOption == 4:
-            reservationsForDate()
+            reservationsForDate(conn)
         elif menuOption == 5:
-            avgStayLength()
+            avgStayLength(conn)
         elif menuOption == 6:
-            deleteReservation()
+            deleteReservation(conn)
         elif menuOption == 7:
-            addIndex()
+            addIndex(conn)
         elif menuOption == 8:
-            dropIndex()
+            dropIndex(conn)
         elif menuOption == 9:
-            testIndex()
+            testIndex(conn)
 
         else:
             endSubMenu = True
 
 
-def concessionOptions():
-    def viewAllConcessions():
+def concessionOptions(conn):
+    def viewAllConcessions(conn):
+        myCursor = conn.cursor()
         myCursor.execute("""
         SELECT ItemName, Price
         FROM Concessions
@@ -339,15 +385,16 @@ def concessionOptions():
         headers = [col[0] for col in myCursor.description]
 
         print(tabulate(rows, headers=headers, tablefmt="grid"))
-     
+        myCursor.close()
 
-    def buyConcession():
+    def buyConcession(conn):
         try: 
+            myCursor = conn.cursor()
             householdNum = int(input("Enter household number: "))
             itemToBuy = input("Enter the name of the item to buy: ")
             quantity = int(input("Enter the quantity to buy: "))
 
-            db.start_transaction()
+            conn.start_transaction()
             myCursor.execute(
                 """
             INSERT INTO ConcessionRecipt(HouseholdNum, ItemID, Quantity, Cost)
@@ -387,30 +434,35 @@ def concessionOptions():
                     {"quantity": quantity, "itemToBuy": itemToBuy},
                 )
             print("Concession puchased successfully")
-            db.commit()
+            conn.commit()
+            myCursor.close()
 
         except mysql.connector.Error as dbError:
             print("Error with the database: ", dbError)
-            db.rollback()
+            conn.rollback()
+            myCursor.close()
         except Exception as e:
             print("There was an error: ", e)
-            db.rollback()
+            conn.rollback()
+            myCursor.close()
             
 
-    def seeStock():
+    def seeStock(conn):
+        myCursor = conn.cursor()
         myCursor.execute("""
         SELECT ItemName, StockAvailable
                          FROM Concessions
                          ORDER BY StockAvailable;
-
 """)
 
         rows = myCursor.fetchall()
         headers = [col[0] for col in myCursor.description]
 
         print(tabulate(rows, headers=headers, tablefmt="grid"))
+        myCursor.close()
 
-    def viewPurchases():
+    def viewPurchases(conn):
+        myCursor = conn.cursor()
         myCursor.execute("""
         SELECT * FROM ConcessionRecipt
 """)
@@ -418,8 +470,10 @@ def concessionOptions():
         headers = [col[0] for col in myCursor.description]
 
         print(tabulate(rows, headers=headers, tablefmt="grid"))
+        myCursor.close()
 
-    def viewPurchasesByHousehold():
+    def viewPurchasesByHousehold(conn):
+        myCursor = conn.cursor()
         householdNum = int(input("Enter household number: "))
 
         myCursor.execute(""" DROP VIEW IF EXISTS PurchasesByHousehold """)
@@ -438,8 +492,10 @@ def concessionOptions():
         headers = [col[0] for col in myCursor.description]
 
         print(tabulate(rows, headers=headers, tablefmt="grid"))
+        myCursor.close()
 
-    def itemSaleSummary():
+    def itemSaleSummary(conn):
+        myCursor = conn.cursor()
         myCursor.execute("""
         SELECT cr.ItemID, c.ItemName, COUNT(*) AS AmountSold, COUNT(*) * c.Price AS TotalSale
                          FROM ConcessionRecipt AS cr
@@ -451,22 +507,30 @@ def concessionOptions():
         headers = [col[0] for col in myCursor.description]
 
         print(tabulate(rows, headers=headers, tablefmt="grid"))
+        myCursor.close()
 
-    def addIndex():
+    def addIndex(conn):
+        myCursor = conn.cursor()
         myCursor.execute(""" 
     CREATE INDEX QuantityAndCostIDX
                          On ConcessionRecipt (Quantity, Cost)
  """)
 
-    print("Index added")
+        print("Index added")
+        myCursor.close()
 
-    def dropIndex():
+
+    def dropIndex(conn):
+        myCursor = conn.cursor()
         myCursor.execute(""" 
         ALTER TABLE ConcessionRecipt
                          DROP INDEX QuantityAndCostIDX
  """)
-    print("Index Dropped")
-    def testIndex():
+        print("Index Dropped")
+        myCursor.close()
+    
+    def testIndex(conn):
+        myCursor = conn.cursor()
         quantity = int(input("Enter a quantity: "))
         cost = float(input("Enter a cost: "))
         myCursor.execute(
@@ -482,13 +546,15 @@ def concessionOptions():
         headers = [col[0] for col in myCursor.description]
 
         print(tabulate(rows, headers=headers, tablefmt="grid"))
+        myCursor.close()
 
-    def addStock():
+    def addStock(conn):
         try:
+            myCursor = conn.cursor()
             itemName = input("Enter item name: ")
             addQuantity = int(input("Quantity to add: "))
 
-            db.start_transaction()
+            conn.start_transaction()
 
             #Confirm that the item exists
             myCursor.execute(""" 
@@ -501,7 +567,7 @@ def concessionOptions():
             #End transaction if item doesn't exist
             if not result:
                 print("Item doesn't exist")
-                db.rollback()
+                conn.rollback()
                 return
             
             myCursor.execute(""" SAVEPOINT preStockUpdate """)
@@ -516,12 +582,14 @@ def concessionOptions():
       "itemName": itemName})
             
             #Commit the stock update
-            db.commit()
+            conn.commit()
+            myCursor.close()
 
         except Exception as e:
             print("An error occured:", e)
             myCursor.execute(""" ROLLBACK TO SAVEPOINT preStockUpdate """)
-            db.commit()
+            conn.commit()
+            myCursor.close()
 
     endSubMenu = False
     while not endSubMenu:
@@ -538,30 +606,32 @@ def concessionOptions():
         menuOption = int(input("Option: "))
 
         if menuOption == 1:
-            viewAllConcessions()
+            viewAllConcessions(conn)
         elif menuOption == 2:
-            buyConcession()
+            buyConcession(conn)
         elif menuOption == 3:
-            viewPurchases()
+            viewPurchases(conn)
         elif menuOption == 4:
-            viewPurchasesByHousehold()
+            viewPurchasesByHousehold(conn)
         elif menuOption == 5:
-            seeStock()
+            seeStock(conn)
         elif menuOption == 6:
-            itemSaleSummary()
+            itemSaleSummary(conn)
         elif menuOption == 7:
-            addIndex()
+            addIndex(conn)
         elif menuOption == 8:
-            dropIndex()
+            dropIndex(conn)
         elif menuOption == 9:
-            testIndex()
+            testIndex(conn)
         elif menuOption == 10:
-            addStock()
+            addStock(conn)
         else:
+            conn.close()
             endSubMenu = True
+            
 
 
-def mainMenu():
+def mainMenu(conn):
     # Main menu
     endMenu = False
 
@@ -577,29 +647,28 @@ def mainMenu():
 
         menuOption = int(input("Option: "))
         if menuOption == 1:
-            campsiteReservationOption()
+            campsiteReservationOption(conn)
         elif menuOption == 2:
-            concessionOptions()
+            concessionOptions(conn)
         elif menuOption == 3:
-            showWatercraft()
+            showWatercraft(conn)
         elif menuOption == 4:
-            showShelters()
+            showShelters(conn)
         elif menuOption == 5:
-            showHouseholds()
+            showHouseholds(conn)
 
         else:
+            conn.close()
             endMenu = True
+
 
 
 def main():
     # Connect to the database
-    initialize_database()
+    conn = initialize_database()
 
     # Display the main menu
-    mainMenu()
-
-    
-
+    mainMenu(conn)
 
 if __name__ == "__main__":
     main()
