@@ -157,7 +157,7 @@ def campsiteReservationOption(conn):
 
     def makeNewReservation(conn):
         try:
-            myCursor = conn.cursor()
+            myCursor = conn.cursor(buffered = True)
             householdNum = int(input("Enter household number: "))
             campsiteName = input("Enter campsite to book: ")
             startDate = input("Enter start date: ")
@@ -169,6 +169,7 @@ def campsiteReservationOption(conn):
             myCursor.callproc(
                 "MakeCampsiteReservation", [householdNum, campsiteName, startDate, endDate]
             )
+
 
             # Update the household's balance
             myCursor.execute(
