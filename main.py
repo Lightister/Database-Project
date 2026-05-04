@@ -497,7 +497,7 @@ def concessionOptions(conn):
     def itemSaleSummary(conn):
         myCursor = conn.cursor()
         myCursor.execute("""
-        SELECT cr.ItemID, c.ItemName, COUNT(*) AS AmountSold, COUNT(*) * c.Price AS TotalSale
+        SELECT cr.ItemID, c.ItemName, SUM(cr.Quantity) AS AmountSold, SUM(cr.Quantity)* c.Price AS TotalSale
                          FROM ConcessionRecipt AS cr
                          INNER JOIN Concessions AS c ON cr.ItemID = c.ItemID
                          GROUP BY cr.ItemID, c.ItemName
