@@ -157,54 +157,75 @@ def campsiteReservationOption(conn):
 
         myCursor.close()
 
+
     #Makes a new reservation
     def makeNewReservation(conn):
         try:
+            conn.rollback()
+            conn.autocommit = False
             myCursor = conn.cursor(buffered = True)
-            householdNum = int(input("Enter household number: "))
-            campsiteName = input("Enter campsite to book: ")
-            startDate = input("Enter start date: ")
-            endDate = input("Enter end date: ")
-
+            numOfReservations = int(input("How many reservations? "))
             conn.start_transaction()
-
-            #Procedure call to make a campsite reservation
-            myCursor.callproc(
-                "MakeCampsiteReservation", [householdNum, campsiteName, startDate, endDate]
-            )
-
-
-            #Updates the household's balance
-            myCursor.execute(
-                    """
-                UPDATE Household
-                INNER JOIN Campsite AS c ON %(campsiteName)s = c.SiteName
-                SET Balance = (Balance + c.Price * DATEDIFF(%(endDate)s, %(startDate)s))
-                WHERE HouseHoldNum = %(householdNum)s
+            
+            for i in range(numOfReservations):
                 
+                householdNum = int(input("Enter household number: "))
+                campsiteName = input("Enter campsite to book: ")
+                startDate = input("Enter start date: ")
+                endDate = input("Enter end date: ")
 
-                """,
-                    {
-                        "householdNum": householdNum,
-                        "campsiteName": campsiteName,
-                        "startDate": startDate,
-                        "endDate": endDate,
-                    },
-                )
+                savepointName = f"Reservation_{i+1}"
+                
+                #Creates a savepoint for each seperate reservation, so that if one fails, the others still get committed
+                myCursor.execute(f""" SAVEPOINT {savepointName} """)
+
+                try:
+                    #Procedure call to make a campsite reservation
+                    myCursor.execute(
+                        """CALL MakeCampsiteReservation(%(householdNum)s, %(campsiteName)s, %(startDate)s,  %(endDate)s);""", 
+                        {"householdNum":householdNum, "campsiteName":campsiteName, "startDate":startDate, "endDate":endDate}
+                    )
+
+                    myCursor.execute("SELECT ROW_COUNT()")
+                    rows = myCursor.fetchone()[0]
+                    if rows == 0:
+                        raise Exception("Reservation condtition failed")
+
+                    #Updates the household's balance
+                    myCursor.execute(
+                            """
+                        UPDATE Household
+                        INNER JOIN Campsite AS c ON c.SiteName = %(campsiteName)s 
+                        SET Balance = (Balance + c.Price * DATEDIFF(%(endDate)s, %(startDate)s))
+                        WHERE HouseHoldNum = %(householdNum)s
+                        
+
+                        """,
+                            {
+                                "householdNum": householdNum,
+                                "campsiteName": campsiteName,
+                                "startDate": startDate,
+                                "endDate": endDate,
+                            },
+                        )
+                    
+                   
+                except Exception as e:
+                    print(f"Reservation {i+1} failed: ", e)
+                    myCursor.execute(f""" ROLLBACK TO SAVEPOINT {savepointName} """)
+            
             conn.commit()
-            print("Booking added succesfully")
-            myCursor.close()
-
         #Handles errors with the database, rolls-back transaction
         except mysql.connector.Error as dbError:
             print("Error with the database, transaction rolled-back:", dbError)
             conn.rollback()
-            myCursor.close()
-
+            
         #Handles any other error, rolls-back transaction
         except Exception as e:
             print("An error occured, transaction was rolled-back: ", e)
             conn.rollback()
+        finally:
+            #conn.autocommit = True
             myCursor.close()
 
     #Allows the user to look up a household and display all associated campsite reservations
