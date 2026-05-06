@@ -65,12 +65,12 @@ def mongo_query_example(mongo_db):
     while watercraftId != "0":
         watercraftId = input("Enter a watercraft ID to see all reservations for that watercraft: ")
         for record in mongo_db.Watercraft.find({"WaterCraftId": watercraftId}):
-        if record:
-            print(record)
-        elif watercraftId != "0":
-            print("Quitting")
-        else:
-            print("no reservation found try again or enter 0 to quit")
+            if record:
+                print(record)
+            elif watercraftId != "0":
+                print("Quitting")
+            else:
+                print("no reservation found try again or enter 0 to quit")
     
 
 
