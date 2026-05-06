@@ -6,6 +6,7 @@
 import mysql.connector
 from mysql.connector import errorcode
 from tabulate import tabulate
+from pymongo import MongoClient
 
 
 def initialize_database():
@@ -34,6 +35,44 @@ def initialize_database():
             print("Cannot connect to database:", err)
             return
     return db
+
+def intitialize_mongodb():
+    try:
+        client = MongoClient("mongodb://localhost:27017/")
+        db = client["Campground"]
+        return db
+    except Exception as e:
+        print("Cannot connect to MongoDB:", e)
+        return
+
+def mongo_query_example(mongo_db):
+    mongo_db.create_collection("Watercraft")
+
+
+    WatercraftData = [ 
+            { "HouseHoldNum": 1, "WaterCraftId": "PB003", "StartTime": "Jan 3rd",   "EndTime": "Jan 4th",    "Cost": 20.00 },
+            { "HouseHoldNum": 2, "WaterCraftId": "PB004", "StartTime": "May 31",    "EndTime": "Jun 10th",   "Cost": 20.00 },
+            { "HouseHoldNum": 3, "WaterCraftId": "KC005", "StartTime": "June 11",   "EndTime": "June 11",    "Cost": 35.00 },
+            { "HouseHoldNum": 4, "WaterCraftId": "SB001", "StartTime": "July 15th", "EndTime": "April 17th", "Cost": 18.00 },
+            { "HouseHoldNum": 5, "WaterCraftId": "KC006", "StartTime": "May 6th",   "EndTime": "May 7th",    "Cost": 35.00 }
+        ]
+
+    mongo_db.Watercraft.insert_many(WatercraftData)
+    print("\n Watercraft Records: ")
+    for record in mongo_db.Watercraft.find():
+        print(record)
+    watercraftId = ""
+    while watercraftId != "0":
+        watercraftId = input("Enter a watercraft ID to see all reservations for that watercraft: ")
+        for record in mongo_db.Watercraft.find({"WaterCraftId": watercraftId}):
+        if record:
+            print(record)
+        elif watercraftId != "0":
+            print("Quitting")
+        else:
+            print("no reservation found try again or enter 0 to quit")
+    
+
 
 #Displays all households
 def showHouseholds(conn):
@@ -138,14 +177,15 @@ def showWaterReservations(conn):
         print(x)
 
 
-def MakeWatercraftReservation():
+def MakeWatercraftReservation(conn):
     householdNum = int(input("Enter household number: "))
     watercraftId = input("Enter watercraft ID: ")
     startDate = input("Enter start date: ")
     endDate = input("Enter end date: ")
 
-    db.start_transaction()
-    myCursor.execute(""
+    myCursor = conn.cursor()
+    conn.start_transaction()
+    myCursor.execute("""
     INSERT INTO Reservations (HouseholdNum, WaterCraftID, StartDate, EndDate)
                     SELECT %(householdNum)s, %(watercraftId)s, %(startDate)s, %(endDate)s
                     FROM Watercraft AS w
@@ -167,7 +207,7 @@ def MakeWatercraftReservation():
     )
     if myCursor.rowcount == 0:
         print("Something was off about your booking try again")
-        db.rollback()
+        conn.rollback()
     else:
         myCursor.execute(
             """
@@ -183,17 +223,19 @@ def MakeWatercraftReservation():
                 "endDate": endDate,
             },
         )
-        db.commit()
+        conn.commit()
         print("Watercraft booked successfully")
+    myCursor.close()
 
-def MakeShelterReservation():
+def MakeShelterReservation(conn):
     householdNum = int(input("Enter household number: "))
     shelterId = input("Enter shelter ID: ")
     startDate = input("Enter start date: ")
     endDate = input("Enter end date: ")
 
-    db.start_transaction()
-    myCursor.execute(""
+    myCursor = conn.cursor()
+    conn.start_transaction()
+    myCursor.execute("""
     INSERT INTO Reservations (HouseholdNum, ShelterID, StartDate, EndDate)
                     SELECT %(householdNum)s, %(shelterId)s, %(startDate)s, %(endDate)s
                     FROM PicnicShelters AS p
@@ -216,7 +258,7 @@ def MakeShelterReservation():
 
     if myCursor.rowcount == 0:
         print("Something was off about your booking try again")
-        db.rollback()
+        conn.rollback()
     else:
         myCursor.execute(
             """
@@ -232,8 +274,9 @@ def MakeShelterReservation():
                 "endDate": endDate,
             },
         )
-        db.commit()
+        conn.commit()
         print("Shelter booked successfully")
+    myCursor.close()
 
 def showWatercraft(conn):
     myCursor = conn.cursor()
@@ -495,14 +538,13 @@ def campsiteReservationOption(conn):
         print("7: Add index")
         print("8: Drop index")
         print("9: Index test query")
-
-        print("7: Show all shelter reservations")
-        print("8: Show all purchased concessions with item names and costs")
-        print("9: Show average price of all watercraft")
-        print("10: Show all households with overdue balance and a reservation")
-        print("11: Show all concession receipts with discounted items")
-        print("12: Make watercraft reservation")
-        print("13: Make shelter reservation")
+        print("10: Show all shelter reservations")
+        print("11: Show all purchased concessions with item names and costs")
+        print("12: Show average price of all watercraft")
+        print("13: Show all households with overdue balance and a reservation")
+        print("14: Show all concession receipts with discounted items")
+        print("15: Make watercraft reservation")
+        print("16: Make shelter reservation")
         menuOption = int(input("Option: "))
 
         if menuOption == 1:
@@ -523,21 +565,20 @@ def campsiteReservationOption(conn):
             dropIndex(conn)
         elif menuOption == 9:
             testIndex(conn)
-
-        elif menuOption == 7:
-            showShelterReservations()
-        elif menuOption == 8:
-            purchasedItems()
-        elif menuOption == 9:
-            WatercraftAvg()
         elif menuOption == 10:
-            OverDue()
+            showShelterReservations(conn)
         elif menuOption == 11:
-            discountedItems()
+            purchasedItems(conn)
         elif menuOption == 12:
-            MakeWatercraftReservation()
+            WatercraftAvg(conn)
         elif menuOption == 13:
-            MakeShelterReservation()
+            OverDue(conn)
+        elif menuOption == 14:
+            discountedItems(conn)
+        elif menuOption == 15:
+            MakeWatercraftReservation(conn)
+        elif menuOption == 16:
+            MakeShelterReservation(conn)
         else:
             endSubMenu = True
 
