@@ -180,29 +180,29 @@ def showWaterReservations(conn):
 def MakeWatercraftReservation(conn):
     householdNum = int(input("Enter household number: "))
     watercraftId = input("Enter watercraft ID: ")
-    startDate = input("Enter start date: ")
-    endDate = input("Enter end date: ")
+    startTime = input("Enter start Time: ")
+    endTime = input("Enter end Time: ")
 
     myCursor = conn.cursor()
     conn.start_transaction()
     myCursor.execute("""
-    INSERT INTO Reservations (HouseholdNum, WaterCraftID, StartDate, EndDate)
-                    SELECT %(householdNum)s, %(watercraftId)s, %(startDate)s, %(endDate)s
+    INSERT INTO Reservations (HouseholdNum, WaterCraftID, StartTime, EndTime)
+                    SELECT %(householdNum)s, %(watercraftId)s, %(startTime)s, %(endTime)s
                     FROM Watercraft AS w
                     WHERE w.WaterCraftID = %(watercraftId)s
                     AND NOT EXISTS
                     (SELECT 1
                      FROM Reservations AS r
                      WHERE r.WaterCraftID = %(watercraftId)s 
-                     AND ((%(startDate)s BETWEEN r.StartDate AND r.EndDate)
-                     OR (%(endDate)s BETWEEN r.StartDate AND r.EndDate))
+                     AND ((%(startTime)s BETWEEN r.StartTime AND r.EndTime)
+                     OR (%(endTime)s BETWEEN r.StartTime AND r.EndTime))
                      )
     """,
     {
         "householdNum": householdNum,
         "watercraftId": watercraftId,
-        "startDate": startDate,
-        "endDate": endDate,
+        "startTime": startTime,
+        "endTime": endTime,
     },
     )
     if myCursor.rowcount == 0:
@@ -213,14 +213,14 @@ def MakeWatercraftReservation(conn):
             """
         UPDATE Household
         INNER JOIN Watercraft AS w ON %(watercraftId)s = w.WaterCraftID
-        SET Balance = (Balance + w.Price * DATEDIFF(%(endDate)s, %(startDate)s))
+        SET Balance = (Balance + w.Price * DATEDIFF(%(endTime)s, %(startTime)s))
         WHERE HouseHoldNum = %(householdNum)s
         """,
             {
                 "householdNum": householdNum,
                 "watercraftId": watercraftId,
-                "startDate": startDate,
-                "endDate": endDate,
+                "startTime": startTime,
+                "endTime": endTime,
             },
         )
         conn.commit()
@@ -230,29 +230,29 @@ def MakeWatercraftReservation(conn):
 def MakeShelterReservation(conn):
     householdNum = int(input("Enter household number: "))
     shelterId = input("Enter shelter ID: ")
-    startDate = input("Enter start date: ")
-    endDate = input("Enter end date: ")
+    startTime = input("Enter start Time: ")
+    endTime = input("Enter end Time: ")
 
     myCursor = conn.cursor()
     conn.start_transaction()
     myCursor.execute("""
-    INSERT INTO Reservations (HouseholdNum, ShelterID, StartDate, EndDate)
-                    SELECT %(householdNum)s, %(shelterId)s, %(startDate)s, %(endDate)s
+    INSERT INTO Reservations (HouseholdNum, ShelterID, StartTime, EndTime)
+                    SELECT %(householdNum)s, %(shelterId)s, %(startTime)s, %(endTime)s
                     FROM PicnicShelters AS p
                     WHERE p.ShelterID = %(shelterId)s
                     AND NOT EXISTS
                     (SELECT 1
                      FROM Reservations AS r
                      WHERE r.ShelterID = %(shelterId)s 
-                     AND ((%(startDate)s BETWEEN r.StartDate AND r.EndDate)
-                     OR (%(endDate)s BETWEEN r.StartDate AND r.EndDate))
+                     AND ((%(startTime)s BETWEEN r.StartTime AND r.EndTime)
+                     OR (%(endTime)s BETWEEN r.StartTime AND r.EndTime))
                      )
     """,
     {
         "householdNum": householdNum,   
         "shelterId": shelterId,
-        "startDate": startDate,
-        "endDate": endDate,
+        "startTime": startTime,
+        "endTime": endTime,
     },
     )
 
@@ -264,14 +264,14 @@ def MakeShelterReservation(conn):
             """
         UPDATE Household
         INNER JOIN PicnicShelters AS p ON %(shelterId)s = p.ShelterID
-        SET Balance = (Balance + p.Price * DATEDIFF(%(endDate)s, %(startDate)s))
+        SET Balance = (Balance + p.Price * DATEDIFF(%(endTime)s, %(startTime)s))
         WHERE HouseHoldNum = %(householdNum)s
         """,
             {
                 "householdNum": householdNum,   
                 "shelterId": shelterId,
-                "startDate": startDate,
-                "endDate": endDate,
+                "startTime": startTime,
+                "endTime": endTime,
             },
         )
         conn.commit()
