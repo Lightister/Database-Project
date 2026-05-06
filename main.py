@@ -48,6 +48,9 @@ def showShelterReservations()
     WHERE HouseholdNum = HouseholdNum
     """
     )
+    for x in myResult:
+        print(x)
+
 
 ##Show all reciepts with item costs and names
 def purchasedItems()
@@ -58,6 +61,9 @@ def purchasedItems()
     WHERE ItemId = ItemId
     """
     )
+    for x in myResult:
+        print(x)
+
 
 ##Shows the average price of all watercraft
 def WatercraftAvg() 
@@ -69,6 +75,9 @@ def WatercraftAvg()
     WaterCraftID
     """
     )
+    for x in myResult:
+        print(x)
+
 
 ##Find all households with zero or negative balance with a booked campsite
 def OverDue()
@@ -81,6 +90,9 @@ def OverDue()
     )
     """
     )
+    for x in myResult:
+        print(x)
+
 
 ## Find all concession receipts with cost less than price(for discounts)
 def discountedItems()
@@ -93,6 +105,9 @@ def discountedItems()
     )
     """
     )
+    for x in myResult:
+        print(x)
+
 
 ## Check if any item out of stock
 ## see if this runs later σ_{StockAvailable < 1}(Concessions)
@@ -103,7 +118,106 @@ def showWaterReservations():
     SELECT WaterCraftId, HouseholdNum FROM Reservations, Watercraft WHERE HouseholdNum = HouseholdNum
     """
     )
+    for x in myResult:
+        print(x)
 
+
+def MakeWatercraftReservation():
+    householdNum = int(input("Enter household number: "))
+    watercraftId = input("Enter watercraft ID: ")
+    startDate = input("Enter start date: ")
+    endDate = input("Enter end date: ")
+
+    db.start_transaction()
+    myCursor.execute(""
+    INSERT INTO Reservations (HouseholdNum, WaterCraftID, StartDate, EndDate)
+                    SELECT %(householdNum)s, %(watercraftId)s, %(startDate)s, %(endDate)s
+                    FROM Watercraft AS w
+                    WHERE w.WaterCraftID = %(watercraftId)s
+                    AND NOT EXISTS
+                    (SELECT 1
+                     FROM Reservations AS r
+                     WHERE r.WaterCraftID = %(watercraftId)s 
+                     AND ((%(startDate)s BETWEEN r.StartDate AND r.EndDate)
+                     OR (%(endDate)s BETWEEN r.StartDate AND r.EndDate))
+                     )
+    """,
+    {
+        "householdNum": householdNum,
+        "watercraftId": watercraftId,
+        "startDate": startDate,
+        "endDate": endDate,
+    },
+    )
+    if myCursor.rowcount == 0:
+        print("Something was off about your booking try again")
+        db.rollback()
+    else:
+        myCursor.execute(
+            """
+        UPDATE Household
+        INNER JOIN Watercraft AS w ON %(watercraftId)s = w.WaterCraftID
+        SET Balance = (Balance + w.Price * DATEDIFF(%(endDate)s, %(startDate)s))
+        WHERE HouseHoldNum = %(householdNum)s
+        """,
+            {
+                "householdNum": householdNum,
+                "watercraftId": watercraftId,
+                "startDate": startDate,
+                "endDate": endDate,
+            },
+        )
+        db.commit()
+        print("Watercraft booked successfully")
+
+def MakeShelterReservation():
+    householdNum = int(input("Enter household number: "))
+    shelterId = input("Enter shelter ID: ")
+    startDate = input("Enter start date: ")
+    endDate = input("Enter end date: ")
+
+    db.start_transaction()
+    myCursor.execute(""
+    INSERT INTO Reservations (HouseholdNum, ShelterID, StartDate, EndDate)
+                    SELECT %(householdNum)s, %(shelterId)s, %(startDate)s, %(endDate)s
+                    FROM PicnicShelters AS p
+                    WHERE p.ShelterID = %(shelterId)s
+                    AND NOT EXISTS
+                    (SELECT 1
+                     FROM Reservations AS r
+                     WHERE r.ShelterID = %(shelterId)s 
+                     AND ((%(startDate)s BETWEEN r.StartDate AND r.EndDate)
+                     OR (%(endDate)s BETWEEN r.StartDate AND r.EndDate))
+                     )
+    """,
+    {
+        "householdNum": householdNum,   
+        "shelterId": shelterId,
+        "startDate": startDate,
+        "endDate": endDate,
+    },
+    )
+
+    if myCursor.rowcount == 0:
+        print("Something was off about your booking try again")
+        db.rollback()
+    else:
+        myCursor.execute(
+            """
+        UPDATE Household
+        INNER JOIN PicnicShelters AS p ON %(shelterId)s = p.ShelterID
+        SET Balance = (Balance + p.Price * DATEDIFF(%(endDate)s, %(startDate)s))
+        WHERE HouseHoldNum = %(householdNum)s
+        """,
+            {
+                "householdNum": householdNum,   
+                "shelterId": shelterId,
+                "startDate": startDate,
+                "endDate": endDate,
+            },
+        )
+        db.commit()
+        print("Shelter booked successfully")
 
 def showWatercraft():
     myCursor.execute("SELECT * FROM Watercraft")
@@ -306,6 +420,13 @@ def campsiteReservationOption():
         print("4: See all by date")
         print("5: See average stay length by site")
         print("6: Delete a reservation")
+        print("7: Show all shelter reservations")
+        print("8: Show all purchased concessions with item names and costs")
+        print("9: Show average price of all watercraft")
+        print("10: Show all households with overdue balance and a reservation")
+        print("11: Show all concession receipts with discounted items")
+        print("12: Make watercraft reservation")
+        print("13: Make shelter reservation")
         menuOption = int(input("Option: "))
 
         if menuOption == 1:
@@ -320,6 +441,20 @@ def campsiteReservationOption():
             avgStayLength()
         elif menuOption == 6:
             deleteReservation()
+        elif menuOption == 7:
+            showShelterReservations()
+        elif menuOption == 8:
+            purchasedItems()
+        elif menuOption == 9:
+            WatercraftAvg()
+        elif menuOption == 10:
+            OverDue()
+        elif menuOption == 11:
+            discountedItems()
+        elif menuOption == 12:
+            MakeWatercraftReservation()
+        elif menuOption == 13:
+            MakeShelterReservation()
         else:
             endSubMenu = True
 
