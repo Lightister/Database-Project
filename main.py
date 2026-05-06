@@ -88,47 +88,45 @@ def showHouseholds(conn):
     myCursor.close()
 
 
-#Shows all shelter reservations and the households that are suing them
+#Shows all shelter reservations and the households that are using them
 def showShelterReservations(conn):
     myCursor = conn.cursor()
     myCursor.execute("""
-    SELECT ShelterId, HouseholdNum 
-    FROM Reservations, PicnicShelters 
-    WHERE HouseholdNum = HouseholdNum
+    SELECT r.ShelterId, r.HouseholdNum 
+    FROM Reservations r
+    JOIN PicnicShelters p on r.ShelterID = p.ShelterId
     """)
+    rows = myCursor.fetchall()
+    headers = [col[0] for col in myCursor.description]
+    print(tabulate(rows, headers=headers, tablefmt="grid")
     myCursor.close()
-
-    for x in myResult:
-        print(x)
 
 
 ##Show all reciepts with item costs and names
 def purchasedItems(conn):
     myCursor = conn.cursor()
     myCursor.execute("""
-    SELECT ItemId, ItemName, Price
-    FROM ConcessionRecipt, Concessions
-    WHERE ItemId = ItemId
+    SELECT cr.ItemId, c.ItemName, c.Price
+    FROM ConcessionRecipt cr
+    JOIN Concessions c ON cr.ItemID = c.ItemID
     """)
+    rows = myCursor.fetchall()
+    headers = [col[0] for col in myCursor.description]
+    print(tabulate(rows, headers=headers, tablefmt="grid"))
     myCursor.close()
-
-    for x in myResult:
-        print(x)
 
 
 ##Shows the average price of all watercraft
 def WatercraftAvg(conn):
     myCursor = conn.cursor()
     myCursor.execute("""
-    SELECT WaterCraftID, AVG(Price) AS Mean_Price
+    SELECT AVG(Price) AS Mean_Price
     FROM Watercraft
-    GROUP BY
-    WaterCraftID
     """)
+    rows = myCursor.fetchall()
+    headers = [col[0] for col in myCursor.description]
+    print(tabulate(rows, headers=headers, tablefmt="grid"))
     myCursor.close()
-
-    for x in myResult:
-        print(x)
 
 
 ##Find all households with zero or negative balance with a booked campsite
@@ -137,15 +135,14 @@ def OverDue(conn):
     myCursor.execute("""
     SELECT * FROM CampsiteBooking
     WHERE HouseholdNum IN (
-        Select HouseholdNum FROM Household
-        WHERE Balance <=0
+        SELECT HouseholdNum FROM Household
+        WHERE Balance <= 0
     )
     """)
+    rows = myCursor.fetchall()
+    headers = [col[0] for col in myCursor.description]
+    print(tabulate(rows, headers=headers, tablefmt="grid"))
     myCursor.close()
-
-    for x in myResult:
-        print(x)
-
 
 ## Find all concession receipts with cost less than price(for discounts)
 def discountedItems(conn):
@@ -157,10 +154,10 @@ def discountedItems(conn):
         WHERE Concessions.ItemID = ConcessionRecipt.ItemID
     )
     """)
+    rows = myCursor.fetchall()
+    headers = [col[0] for col in myCursor.description]
+    print(tabulate(rows, headers=headers, tablefmt="grid"))
     myCursor.close()
-
-    for x in myResult:
-        print(x)
 
 
 ## Check if any item out of stock
@@ -170,11 +167,14 @@ def discountedItems(conn):
 def showWaterReservations(conn):
     myCursor = conn.cursor()
     myCursor.execute("""
-    SELECT WaterCraftId, HouseholdNum FROM Reservations, Watercraft WHERE HouseholdNum = HouseholdNum
+    SELECT r.WaterCraftId, r.HouseHoldNum
+    FROM Reservations r
+    JOIN Watercraft w ON r.WaterCraftId = w.WaterCraftId
     """)
+    rows = myCursor.fetchall()
+    headers = [col[0] for col in myCursor.description]
+    print(tabulate(rows, headers=headers, tablefmt="grid"))
     myCursor.close()
-    for x in myResult:
-        print(x)
 
 
 def MakeWatercraftReservation(conn):
@@ -877,6 +877,10 @@ def mainMenu(conn):
             showShelters(conn)
         elif menuOption == 5:
             showHouseholds(conn)
+        elif menuOption == 6:
+            MakeWatercraftReservation(conn)
+        elif menuOption == 7:
+            MakeShelterReservation(conn)
 
         else:
             conn.close()
